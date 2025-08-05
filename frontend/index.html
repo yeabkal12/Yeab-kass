@@ -4,16 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Yeab Game Zone</title>
-    
-    <!-- CRITICAL FIX: This link correctly points to your stylesheet. -->
     <link rel="stylesheet" href="styles.css">
-    
-    <!-- This is the official script from Telegram for Web Apps. -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
 
-    <div class="app-container">
+    <!-- NEW: The Loading Screen (Visible by default) -->
+    <div id="loading-view" class="loading-container">
+        <div class="loading-logo">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M2 17L12 22L22 17" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <div class="loading-text">Yeab Games</div>
+        <div class="loading-bar"></div>
+        <div class="loading-status">Loading...</div>
+    </div>
+
+    <!-- YOUR EXISTING APP (Now hidden by default) -->
+    <div id="app-container" class="app-container hidden">
         <!-- Header Section -->
         <header class="main-header">
             <div class="header-left">
@@ -39,38 +50,10 @@
 
         <!-- Game List Section -->
         <div id="game-list" class="game-list">
-            <!-- JavaScript will load real game data here. This is just an example. -->
-            <div class="game-card">
-                <div class="card-left">
-                    <div class="avatar-container">
-                        <img src="https://i.pravatar.cc/80?u=YOA5" alt="Avatar">
-                        <span class="star-badge">⭐</span>
-                    </div>
-                    <span class="username">@YOA***5</span>
-                    <span class="user-stake">20 ብር</span>
-                </div>
-                <div class="card-center">
-                    <div class="game-info">
-                        <span class="crown-icon">👑</span>
-                        <p class="amharic-text">1 MMC በማሸነፍ</p>
-                        <button class="join-btn">Join</button>
-                    </div>
-                </div>
-                <div class="card-right">
-                    <div class="game-stat">
-                        <span>Stake</span>
-                        <strong>20 ብር</strong>
-                    </div>
-                    <div class="game-stat">
-                        <span>Prize</span>
-                        <strong class="prize-amount">80 ብር</strong>
-                    </div>
-                </div>
-            </div>
+            <!-- JavaScript will load real game data here -->
         </div>
     </div>
 
-    <!-- This links to your JavaScript file, which adds all the interactivity. -->
     <script src="app.js"></script>
 </body>
 </html>
