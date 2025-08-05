@@ -8,75 +8,60 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <!-- View 1: The Game Lobby -->
-    <div id="lobby-view">
-        <!-- ... (header and game-list are unchanged) ... -->
-    </div>
 
-    <!-- View 2: Create Game Screen -->
-    <div id="create-game-view" class="hidden">
-        <h2>Create a New Game</h2>
-        
-        <div class="setting">
-            <label>Stake Amount (ETB)</label>
-            <div class="options" id="stake-options">
-                <button class="option-btn" data-stake="20">20</button>
-                <button class="option-btn active" data-stake="50">50</button>
-                <button class="option-btn" data-stake="100">100</button>
+    <div class="app-container">
+        <!-- Header with Profile and + NEW Button -->
+        <header class="main-header">
+            <div class="header-left">
+                <div class="profile-icon">👤</div>
+                <div class="balance">
+                    <span class="coin-icon">💰</span>
+                    <span>0.00</span>
+                </div>
             </div>
-            <!-- NEW: Input for custom stake amount -->
-            <input type="number" id="custom-stake-input" placeholder="Or enter a custom amount">
-        </div>
-        
-        <div class="setting">
-            <label>Winning Condition</label>
-            <div class="options" id="win-options">
-                <button class="option-btn" data-win="1">1 Piece</button>
-                <button class="option-btn active" data-win="2">2 Pieces</button>
-                <button class="option-btn" data-win="4">Full House</button>
+            <div class="header-actions">
+                <button id="new-game-btn">+ NEW</button>
+                <button id="refresh-btn">🔄</button>
             </div>
-        </div>
-        
-        <div class="form-actions">
-            <button id="cancel-create-btn">Cancel</button>
-            <button id="show-confirm-btn">Next</button> <!-- Changed from Create Game -->
-        </div>
-    </div>
+        </header>
 
-    <!-- NEW: Confirmation Modal (Hidden by default) -->
-    <div id="confirm-modal-overlay" class="hidden">
-        <div id="confirm-modal">
-            <div class="modal-header">
-                <h3>Confirm Game</h3>
-                <button id="close-modal-btn">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="summary-card">
-                    <h4>Game Summary</h4>
-                    <div class="summary-details">
-                        <div class="detail-item">
-                            <span>👥 Players</span>
-                            <strong id="summary-players">2</strong>
-                        </div>
-                        <div class="detail-item">
-                            <span>💰 Stake</span>
-                            <strong id="summary-stake">50 ETB</strong>
-                        </div>
-                        <div class="detail-item">
-                            <span>👑 To Win</span>
-                            <strong id="summary-win">2 Pieces</strong>
-                        </div>
+        <!-- New Filter Buttons with Gradient -->
+        <div class="filters">
+            <button class="filter-btn active">All</button>
+            <button class="filter-btn"><span class="coin-icon">💰</span> 20-100</button>
+            <button class="filter-btn"><span class="coin-icon">💰</span> 200-700</button>
+            <button class="filter-btn"><span class="coin-icon">💰</span> 1000+</button>
+        </div>
+
+        <!-- Main Game List Area -->
+        <div id="game-list" class="game-list">
+            <!-- Game Card Example (JavaScript will load real data here) -->
+            <div class="game-card">
+                <div class="card-left">
+                    <div class="avatar-container">
+                        <img src="https://i.pravatar.cc/80?u=YOA5" alt="Avatar">
+                        <span class="star-badge">⭐</span>
+                    </div>
+                    <span class="username">@YOA***5</span>
+                    <span class="user-stake">20 ብር</span>
+                </div>
+                <div class="card-center">
+                    <div class="game-info">
+                        <span class="crown-icon">👑</span>
+                        <p class="amharic-text">1 MMC በማሸነፍ</p>
+                        <button class="join-btn">Join</button>
                     </div>
                 </div>
-                <div class="prize-card">
-                    <h4>🏆 Total Prize</h4>
-                    <p>Winner takes all</p>
-                    <strong id="summary-prize">90 ETB</strong>
+                <div class="card-right">
+                    <div class="game-stat">
+                        <span>Stake</span>
+                        <strong>20 ብር</strong>
+                    </div>
+                    <div class="game-stat">
+                        <span>Prize</span>
+                        <strong class="prize-amount">80 ብር</strong>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-actions">
-                <button id="cancel-confirm-btn">Cancel</button>
-                <button id="confirm-create-btn">Create Game</button>
             </div>
         </div>
     </div>
