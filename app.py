@@ -1,11 +1,12 @@
-# app.py (Final, Complete, and Perfected Version)
+# app.py (Final, Perfected, and Guaranteed Version)
 
 import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, Response
-from fastapi.middleware.cors import CORSMiddleware # <-- The security permission slip
+from fastapi import FastAPI, Request, Response, status
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from telegram import Update
 from telegram.ext import Application
 from telegram.error import RetryAfter
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+FRONTEND_URL = os.getenv("FRONTEND_URL") # We will add this to Render
 
 # --- 2. LIFESPAN LOGIC (FOR STARTUP & SHUTDOWN) ---
 bot_app: Application | None = None
@@ -32,7 +34,7 @@ async def lifespan(app: FastAPI):
     if TELEGRAM_BOT_TOKEN:
         ptb_application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
         bot_app = setup_handlers(ptb_application)
-        logger.info("Telegram bot application created and handlers have been attached.")
+        logger.info("Telegram bot application created.")
         
         await bot_app.initialize()
         
@@ -48,7 +50,7 @@ async def lifespan(app: FastAPI):
         else:
             logger.error("FATAL: WEBHOOK_URL is not set!")
     else:
-        logger.error("FATAL: TELEGRAM_BOT_TOKEN is not set! Bot will be disabled.")
+        logger.error("FATAL: TELEGRAM_BOT_TOKEN is not set!")
 
     yield
     
@@ -59,28 +61,24 @@ async def lifespan(app: FastAPI):
 # --- 3. FASTAPI APP INITIALIZATION ---
 app = FastAPI(title="Yeab Game Zone API", lifespan=lifespan)
 
-# --- CRITICAL FIX: Add CORS Middleware ---
-# This tells your backend that it is safe to accept requests from your frontend website.
-# Without this, the browser will block the connection, causing the "Failed to load" error.
-origins = [
-    "https://yeab-kass-1.onrender.com", # Your Frontend URL
-]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["GET"], # We only need GET for the games list
-    allow_headers=["*"],
-)
+# --- 4. CORS MIDDLEWARE (Security Permissions) ---
+# This must be defined before the API routes.
+if FRONTEND_URL:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[FRONTEND_URL],
+        allow_credentials=True,
+        allow_methods=["GET"],
+        allow_headers=["*"],
+    )
 
-
-# --- 4. API ENDPOINTS ---
+# --- 5. API ENDPOINTS ---
+# All specific API routes must be defined BEFORE the general static file mount.
 
 @app.post("/api/telegram/webhook")
 async def telegram_webhook(request: Request):
     """Main webhook to receive updates from Telegram."""
-    if not bot_app:
-        return Response(status_code=503)
+    if not bot_app: return Response(status_code=503)
     try:
         data = await request.json()
         update = Update.de_json(data, bot_app.bot)
@@ -118,4 +116,7 @@ async def health_check():
     """A simple health check endpoint for Render."""
     return {"status": "healthy"}
 
-# NOTE: The app.mount("/", ...) line has been permanently removed as it is no longer needed.
+
+# --- 6. MOUNT STATIC FILES (FOR WEB APP) ---
+# This is the "catch-all" general delivery box. It MUST be last.
+app.mount("/", StaticFiles(directory="frontend"), name="frontend")
