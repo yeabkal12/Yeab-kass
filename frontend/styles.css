@@ -1,0 +1,59 @@
+:root {
+    --dark-bg: #1e1e2f; /* Dark charcoal gray */
+    --card-bg: #2d2d44; /* Slightly lighter gray */
+    --text-color: #ffffff;
+    --text-muted: #a0a0b0;
+    --magenta: #e91e63;
+    --gold: #ffc107;
+    --electric-purple: #8A2BE2;
+    --royal-blue: #4169E1;
+}
+
+body {
+    background-color: var(--dark-bg);
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif, system-ui;
+    margin: 0;
+    padding: 15px;
+    -webkit-font-smoothing: antialiased;
+}
+
+.app-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Header */
+.main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.header-left { display: flex; align-items: center; gap: 10px; }
+.profile-icon { font-size: 24px; }
+.balance { display: flex; align-items: center; background-color: var(--card-bg); padding: 8px 12px; border-radius: 8px; font-weight: bold; }
+.header-actions { display: flex; align-items: center; gap: 10px; }
+#new-game-btn { background-color: var(--magenta); color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; }
+#refresh-btn { background-color: var(--card-bg); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+
+/* New Filters with Gradient */
+.filters { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+.filters::-webkit-scrollbar { display: none; }
+.filter-btn { display: flex; align-items: center; gap: 5px; background-color: rgba(45, 45, 68, 0.5); color: var(--text-color); border: none; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.2s ease-in-out; }
+.filter-btn.active { background-image: linear-gradient(90deg, var(--electric-purple), var(--royal-blue)); color: white; font-weight: bold; box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4); }
+.filter-btn .coin-icon { font-size: 12px; }
+
+/* Game Card */
+.game-list { margin-top: 20px; }
+.game-card { background-color: var(--card-bg); border-radius: 16px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+.card-left, .card-center, .card-right { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.card-left, .card-right { flex: 1; }
+.card-center { flex: 1.5; }
+.avatar-container { position: relative; margin-bottom: 8px; }
+.avatar-container img { width: 60px; height: 60px; border-radius: 12px; }
+.star-badge { position: absolute; top: -5px; right: -5px; font-size: 18px; }
+.username { font-weight: bold; font-size: 14px; }
+.user-stake { color: var(--text-muted); font-size: 12px; }
+.game-info .crown-icon { font-size: 32px; color: var(--gold); }
+.amharic-text { margin: 8px 0; font-size: 14px; }
+.join-btn { background-color: var(--magenta); color: white; border: none; padding: 10px 30px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
+.game-stat { margin-bottom: 10px; }
+.game-stat span { color: var(--text-muted); font-size: 12px; }
+.game-stat strong { font-size: 16px; display: block; }
+.game-stat .prize-amount { color: var(--gold); font-weight: bold; }
