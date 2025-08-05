@@ -4,13 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Yeab Game Zone</title>
+    
+    <!-- CRITICAL FIX: This link correctly points to your stylesheet. -->
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- This is the official script from Telegram for Web Apps. -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
 
     <div class="app-container">
-        <!-- Header with Profile and + NEW Button -->
+        <!-- Header Section -->
         <header class="main-header">
             <div class="header-left">
                 <div class="profile-icon">👤</div>
@@ -25,7 +29,7 @@
             </div>
         </header>
 
-        <!-- New Filter Buttons with Gradient -->
+        <!-- Filter Buttons Section -->
         <div class="filters">
             <button class="filter-btn active">All</button>
             <button class="filter-btn"><span class="coin-icon">💰</span> 20-100</button>
@@ -33,9 +37,9 @@
             <button class="filter-btn"><span class="coin-icon">💰</span> 1000+</button>
         </div>
 
-        <!-- Main Game List Area -->
+        <!-- Game List Section -->
         <div id="game-list" class="game-list">
-            <!-- Game Card Example (JavaScript will load real data here) -->
+            <!-- JavaScript will load real game data here. This is just an example. -->
             <div class="game-card">
                 <div class="card-left">
                     <div class="avatar-container">
@@ -66,6 +70,7 @@
         </div>
     </div>
 
+    <!-- This links to your JavaScript file, which adds all the interactivity. -->
     <script src="app.js"></script>
 </body>
 </html>
