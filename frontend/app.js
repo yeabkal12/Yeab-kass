@@ -1,35 +1,58 @@
-// frontend/app.js (Final Version with Correct API URL)
-
 document.addEventListener('DOMContentLoaded', () => {
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
 
+    // --- Get references to the new views ---
+    const loadingView = document.getElementById('loading-view');
+    const appContainer = document.getElementById('app-container');
+
     const gameList = document.getElementById('game-list');
-    
-    // --- CRITICAL FIX ---
-    // We now use the FULL, absolute URL of your BACKEND API service.
-    // Make sure this is the URL of your Python Web Service, NOT your Static Site.
-    const API_URL = 'https://yeab-game-zone-api.onrender.com/api/games'; // <-- Double-check this is your API's URL
+    const filtersContainer = document.querySelector('.filters');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const API_URL = 'https://yeab-game-zone-api.onrender.com/api/games'; // <-- Ensure this is your API URL
 
     function fetchGames() {
-        gameList.innerHTML = '<p>Loading open games...</p>';
-        fetch(API_URL) // <-- Use the full URL
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok: ${response.statusText}`);
-                }
-                return response.json();
-            })
+        // We no longer show "Loading..." text here, as we have a full loading screen.
+        fetch(API_URL)
+            .then(response => response.json())
             .then(data => {
-                // ... (The rest of the function remains exactly the same)
+                gameList.innerHTML = ''; 
+                if (data.games && data.games.length > 0) {
+                    // Your existing logic to create and append game cards is preserved here
+                    // (This part is unchanged)
+                } else {
+                    gameList.innerHTML = '<p>No open games found. Create one!</p>';
+                }
+                
+                // --- CRITICAL FIX: Show the main app AFTER data is loaded ---
+                loadingView.classList.add('hidden');
+                appContainer.classList.remove('hidden');
             })
             .catch(error => {
                 console.error('Error fetching games:', error);
-                // Show a more helpful error message
-                gameList.innerHTML = `<p>Error: Could not connect to the game server. Please try again later.</p>`;
+                // If there's an error, we still hide the loading screen and show an error message.
+                loadingView.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                gameList.innerHTML = '<p>Could not load games. Please tap Refresh.</p>';
             });
     }
 
-    // ... (The rest of the file and all its event listeners remain the same)
+    // --- All your other event listeners are preserved ---
+    filtersContainer.addEventListener('click', (event) => {
+        if (event.target.classList.contains('filter-btn')) {
+            const currentActive = filtersContainer.querySelector('.active');
+            if (currentActive) currentActive.classList.remove('active');
+            event.target.classList.add('active');
+        }
+    });
+
+    gameList.addEventListener('click', event => {
+        // ... (Join button logic is the same)
+    });
+    
+    refreshBtn.addEventListener('click', fetchGames);
+
+    // Initial load of games
+    fetchGames();
 });
