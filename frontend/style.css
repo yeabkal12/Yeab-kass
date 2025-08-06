@@ -56,4 +56,83 @@ body {
 .game-stat { margin-bottom: 10px; }
 .game-stat span { color: var(--text-muted); font-size: 12px; }
 .game-stat strong { font-size: 16px; display: block; }
-.game-stat .prize-amount { color: var(--gold); font-weight: bold; }
+.game-stat .prize-amount { color: var(--gold); font-weight: bold; }/* --- ADD THESE NEW STYLES TO THE END OF YOUR CSS FILE --- */
+
+/* Styles for the 'Create Game' screen view */
+#create-game-view {
+    padding: 15px;
+}
+#create-game-view h2 {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.setting {
+    margin-bottom: 25px;
+}
+.setting label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: var(--text-muted);
+}
+
+/* This is the new grid style for the stake buttons */
+#stake-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 columns */
+    gap: 10px; /* Space between buttons */
+}
+
+/* General style for all selectable buttons */
+.option-btn {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 2px solid transparent;
+    padding: 12px 5px; /* Adjusted padding for smaller buttons */
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+.option-btn.active {
+    border-color: var(--magenta); /* Use a consistent highlight color */
+}
+
+#custom-stake-input {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 15px;
+    padding: 12px;
+    background-color: var(--card-bg);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 16px;
+    text-align: center;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    gap: 10px;
+}
+.form-actions button {
+    flex: 1; /* Make buttons take equal space */
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+#cancel-create-btn {
+    background-color: var(--text-muted);
+    color: var(--dark-bg);
+}
+#show-confirm-btn {
+    background-color: var(--success-color);
+    color: white;
+}
