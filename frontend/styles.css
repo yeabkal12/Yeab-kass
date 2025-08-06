@@ -54,3 +54,81 @@ h2 { text-align: center; }
 #show-confirm-btn { background-color: var(--primary-color); color: white; }
 
 /* ... (All other styles for modal, loading screen, etc., remain the same) ... */
+/* --- ADD THESE NEW STYLES TO THE END OF YOUR CSS FILE --- */
+/* These styles will ONLY affect the "Confirm Game" modal */
+
+/* 1. Make the modal background and text more vibrant */
+#confirm-modal {
+    background-color: var(--card-bg); /* Use your existing card background color */
+    width: 100%;
+    box-sizing: border-box;
+    padding: 20px;
+    border-radius: 20px 20px 0 0;
+    animation: slideUp 0.3s ease-out;
+}
+.modal-header h3 {
+    font-size: 22px; /* Bigger title */
+    margin: 0;
+}
+#close-modal-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 28px; /* Bigger 'X' button */
+    cursor: pointer;
+}
+
+/* 2. Improve the summary cards */
+.summary-card, .prize-card {
+    background-color: var(--dark-bg); /* Use your main background for contrast */
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+.summary-details {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+.prize-card {
+    text-align: center;
+}
+.prize-card strong {
+    color: var(--gold); /* Use your existing gold color */
+    font-size: 28px;
+    font-weight: bold;
+}
+
+/* 3. CRITICAL FIX: Make the action buttons bigger and more colorful */
+.modal-actions {
+    display: flex;
+    gap: 10px;
+}
+.modal-actions button {
+    flex: 1;
+    padding: 15px;           /* <-- Made bigger */
+    border: none;
+    border-radius: 12px;       /* <-- More rounded */
+    font-size: 18px;           /* <-- Bigger text */
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+.modal-actions button:active {
+    transform: scale(0.98); /* Adds a nice "press" effect */
+}
+
+#cancel-confirm-btn {
+    background-color: #dc3545; /* Vibrant Red */
+    color: white;
+}
+#confirm-create-btn {
+    background-color: #007bff; /* Vibrant Blue */
+    color: white;
+}
+
+/* Animation for the modal sliding up */
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
