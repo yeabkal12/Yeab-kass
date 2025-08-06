@@ -10,14 +10,21 @@
 <body>
 
     <!-- View 1: Loading Screen -->
-    <div id="loading-view" class="loading-container">
-        <div class="loading-logo">
-            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" stroke-width="2" stroke-linejoin="round"/><path d="M2 17L12 22L22 17" stroke="white" stroke-width="2" stroke-linejoin="round"/><path d="M2 12L12 17L22 12" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>
-        </div>
-        <div class="loading-text">Yeab Games</div>
-        <div class="loading-bar"></div>
-        <div class="loading-status">Loading...</div>
+    <!-- In frontend/index.html, replace the old #loading-view div with this one -->
+
+<!-- View 1: Loading Screen (Visible by default) -->
+<div id="loading-view" class="loading-container">
+    <div class="loading-logo">
+        <!-- This is the new "stacked layers" icon -->
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 12.5L12 18.5L22 12.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 8.5L12 14.5L22 8.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 2.5L2 8.5L12 14.5L22 8.5L12 2.5Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
     </div>
+    <div class="loading-text">Yeab Games</div>
+    <div class="loading-status">Loading...</div>
+</div>
 
     <!-- View 2: Main App Container (Lobby) -->
     <div id="app-container" class="app-container hidden">
