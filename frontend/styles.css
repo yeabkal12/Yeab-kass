@@ -40,7 +40,23 @@ h2 { text-align: center; }
 .setting { margin-bottom: 20px; }
 .setting label { display: block; margin-bottom: 10px; font-weight: bold; }
 .options { display: flex; justify-content: space-around; gap: 10px; }
-.option-btn { background-color: var(--card-bg); color: var(--text-color); border: 2px solid transparent; padding: 10px 15px; border-radius: 8px; cursor: pointer; flex-grow: 1; }
+.option-btn /* In frontend/styles.css */
+
+/* Find this existing style rule */
+.option-btn {
+    background-color: var(--success-color); /* <-- CHANGE THIS LINE to use your green color */
+    color: var(--text-color);
+    border: 2px solid transparent;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    flex-grow: 1;
+}
+
+/* This style will now put a magenta border on the ACTIVE green button, which will look great. */
+.option-btn.active {
+    border-color: var(--magenta);
+}
 .option-btn.active { border-color: var(--primary-color); }
 #custom-stake-input { width: 100%; box-sizing: border-box; margin-top: 15px; padding: 12px; background-color: var(--card-bg); border: 1px solid var(--bg-color); border-radius: 8px; color: var(--text-color); font-size: 16px; text-align: center; }
 .form-actions { display: flex; gap: 10px; }
