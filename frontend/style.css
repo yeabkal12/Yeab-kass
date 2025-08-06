@@ -22,6 +22,35 @@ body {
     max-width: 600px;
     margin: 0 auto;
 }
+/* --- NEW LOADING SCREEN STYLES --- */
+.hidden {
+    display: none !important;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full screen height */
+    text-align: center;
+}
+
+.loading-logo {
+    margin-bottom: 15px;
+}
+
+.loading-text {
+    font-size: 22px; /* Slightly larger text */
+    font-weight: 600; /* Bolder */
+    color: var(--text-color);
+}
+
+.loading-status {
+    color: var(--text-muted);
+    font-size: 16px;
+    margin-top: 8px;
+}
 
 /* Header */
 .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
