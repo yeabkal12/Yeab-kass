@@ -9,7 +9,7 @@
 </head>
 <body>
 
-    <!-- View 1: Loading Screen (Visible by default) -->
+    <!-- View 1: Loading Screen -->
     <div id="loading-view" class="loading-container">
         <div class="loading-logo">
             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" stroke-width="2" stroke-linejoin="round"/><path d="M2 17L12 22L22 17" stroke="white" stroke-width="2" stroke-linejoin="round"/><path d="M2 12L12 17L22 12" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>
@@ -19,7 +19,7 @@
         <div class="loading-status">Loading...</div>
     </div>
 
-    <!-- View 2: Main App Container (Hidden by default) -->
+    <!-- View 2: Main App Container (Lobby) -->
     <div id="app-container" class="app-container hidden">
         <header class="main-header">
             <div class="header-left"><div class="profile-icon">👤</div><div class="balance"><span class="coin-icon">💰</span><span>0.00</span></div></div>
@@ -31,20 +31,29 @@
         <div id="game-list" class="game-list"></div>
     </div>
 
-    <!-- View 3: Create Game Screen (Hidden by default) -->
+    <!-- View 3: Create Game Screen (with Expanded Stake Options) -->
     <div id="create-game-view" class="hidden">
         <h2>Create a New Game</h2>
         <div class="setting">
             <label>Stake Amount (ETB)</label>
             <div class="options" id="stake-options">
-                <button class="option-btn" data-stake="20">20</button><button class="option-btn active" data-stake="50">50</button><button class="option-btn" data-stake="100">100</button>
+                <button class="option-btn" data-stake="20">20</button>
+                <button class="option-btn" data-stake="30">30</button>
+                <button class="option-btn active" data-stake="50">50</button>
+                <button class="option-btn" data-stake="100">100</button>
+                <button class="option-btn" data-stake="200">200</button>
+                <button class="option-btn" data-stake="300">300</button>
+                <button class="option-btn" data-stake="500">500</button>
+                <button class="option-btn" data-stake="1000">1000</button>
             </div>
             <input type="number" id="custom-stake-input" placeholder="Or enter a custom amount">
         </div>
         <div class="setting">
             <label>Winning Condition</label>
             <div class="options" id="win-options">
-                <button class="option-btn" data-win="1">1 Piece</button><button class="option-btn active" data-win="2">2 Pieces</button><button class="option-btn" data-win="4">Full House</button>
+                <button class="option-btn" data-win="1">1 Piece</button>
+                <button class="option-btn active" data-win="2">2 Pieces</button>
+                <button class="option-btn" data-win="4">Full House</button>
             </div>
         </div>
         <div class="form-actions">
@@ -52,7 +61,7 @@
         </div>
     </div>
     
-    <!-- View 4: Confirmation Modal (Hidden by default) -->
+    <!-- View 4: Confirmation Modal -->
     <div id="confirm-modal-overlay" class="hidden">
         <div id="confirm-modal">
             <div class="modal-header"><h3>Confirm Game</h3><button id="close-modal-btn">×</button></div>
