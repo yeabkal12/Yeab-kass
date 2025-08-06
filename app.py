@@ -119,4 +119,46 @@ async def health_check():
 
 # --- 6. MOUNT STATIC FILES (FOR WEB APP) ---
 # This is the "catch-all" general delivery box. It MUST be last.
-app.mount("/", StaticFiles(directory="frontend"), name="frontend")
+app.mount("/", StaticFiles(directory="frontend"), name="frontend")# In app.py, replace the existing get_open_games function
+
+@app.get("/api/games")
+async def get_open_games():
+    """
+    This endpoint now fetches REAL, live games from the database
+    that are in the 'lobby' state and returns them as JSON.
+    """
+    live_games = []
+    try:
+        async with get_db_session() as session:
+            # This query joins the games and users tables to get the creator's username
+            stmt = select(
+                games.c.id, 
+                games.c.stake, 
+                games.c.pot, 
+                games.c.win_condition, 
+                users.c.username
+            ).\
+            join(users, games.c.creator_id == users.c.telegram_id).\
+            where(games.c.status == 'lobby').\
+            order_by(games.c.created_at.desc()) # Show newest games first
+            
+            result = await session.execute(stmt)
+            
+            for row in result.fetchall():
+                # We build the response exactly as the frontend expects it
+                win_text = f"{row.win_condition} MMC በማሸነፍ" # "By winning X pieces"
+                
+                live_games.append({
+                    "id": row.id,
+                    "creator_name": row.username or "A Player",
+                    "creator_avatar": f"https://i.pravatar.cc/80?u={row.id}", # Placeholder avatar
+                    "stake": float(row.stake),
+                    "prize": float(row.pot * 0.9), # Calculate prize after 10% commission
+                    "win_condition_text": win_text,
+                    "win_condition_crowns": "👑" * row.win_condition
+                })
+    except Exception as e:
+        logger.error(f"Database error while fetching open games: {e}", exc_info=True)
+        return {"games": []} # Return an empty list if there is an error
+            
+    return {"games": live_games}
