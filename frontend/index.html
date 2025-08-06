@@ -5,19 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Yeab Game Zone</title>
     
-    <!-- CRITICAL FIX: Added a version number to force a reload of the stylesheet -->
     <link rel="stylesheet" href="styles.css?v=2">
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Add this CSS to center the loading screen */
         .loading-container {
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh; /* Make it full screen height */
+            height: 100vh;
             text-align: center;
+        }
+
+        /* Add this animation */
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-logo.spinning {
+            animation: spin 2s linear infinite;
         }
     </style>
 </head>
@@ -25,7 +37,7 @@
 
     <!-- View 1: Loading Screen (Visible by default) -->
     <div id="loading-view" class="loading-container">
-        <div class="loading-logo" style="font-size: 80px;">🎲</div>
+        <div class="loading-logo spinning" style="font-size: 80px;">🎲</div>
         <div class="loading-text">Yeab Games</div>
         <div class="loading-status">Loading...</div>
     </div>
@@ -51,7 +63,7 @@
         <div id="game-list" class="game-list"></div>
     </div>
     
-    <!-- View 3: Create Game Screen (with Expanded Stake Options) -->
+    <!-- View 3: Create Game Screen -->
     <div id="create-game-view" class="hidden">
         <h2>Create a New Game</h2>
         <div class="setting">
@@ -111,6 +123,15 @@
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Delay for 8 seconds (8000 milliseconds)
+            setTimeout(function() {
+                document.getElementById('loading-view').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+            }, 8000);
+        });
+    </script>
     <script src="app.js"></script>
 </body>
 </html>
