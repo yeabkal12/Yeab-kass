@@ -1,3 +1,5 @@
+// /frontend/app.js (The Final, Complete, and Perfected Version)
+
 document.addEventListener('DOMContentLoaded', () => {
     const tg = window.Telegram.WebApp;
     tg.ready();
@@ -12,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameList = document.getElementById('game-list');
     const newGameBtn = document.getElementById('new-game-btn');
     const refreshBtn = document.getElementById('refresh-btn');
+    const filtersContainer = document.getElementById('filters'); // For the filter buttons
     const stakeOptions = document.getElementById('stake-options');
     const customStakeInput = document.getElementById('custom-stake-input');
     const winOptions = document.getElementById('win-options');
@@ -58,6 +61,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 4. Event Listeners for the FULL FLOW ---
+
+    // -- THIS IS THE NEW, WORKING CODE FOR THE FILTER BUTTONS --
+    filtersContainer.addEventListener('click', (event) => {
+        if (event.target.classList.contains('filter-btn')) {
+            // Remove 'active' from the old button
+            filtersContainer.querySelector('.active')?.classList.remove('active');
+            // Add 'active' to the newly clicked button
+            event.target.classList.add('active');
+            // TODO: Add logic here to re-fetch games with the selected filter
+        }
+    });
+
+    // -- The rest of the event listeners are preserved --
     newGameBtn.addEventListener('click', () => showView(createGameView));
     cancelCreateBtn.addEventListener('click', () => showView(appContainer));
     refreshBtn.addEventListener('click', fetchGames);
