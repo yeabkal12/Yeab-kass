@@ -9,48 +9,69 @@
 </head>
 <body>
 
-    <!-- NEW: The Loading Screen (Visible by default) -->
+    <!-- View 1: Loading Screen (Visible by default) -->
     <div id="loading-view" class="loading-container">
         <div class="loading-logo">
-            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="white" stroke-width="2" stroke-linejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="white" stroke-width="2" stroke-linejoin="round"/>
-            </svg>
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" stroke-width="2" stroke-linejoin="round"/><path d="M2 17L12 22L22 17" stroke="white" stroke-width="2" stroke-linejoin="round"/><path d="M2 12L12 17L22 12" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>
         </div>
         <div class="loading-text">Yeab Games</div>
         <div class="loading-bar"></div>
         <div class="loading-status">Loading...</div>
     </div>
 
-    <!-- YOUR EXISTING APP (Now hidden by default) -->
+    <!-- View 2: Main App Container (Hidden by default) -->
     <div id="app-container" class="app-container hidden">
-        <!-- Header Section -->
         <header class="main-header">
-            <div class="header-left">
-                <div class="profile-icon">👤</div>
-                <div class="balance">
-                    <span class="coin-icon">💰</span>
-                    <span>0.00</span>
+            <div class="header-left"><div class="profile-icon">👤</div><div class="balance"><span class="coin-icon">💰</span><span>0.00</span></div></div>
+            <div class="header-actions"><button id="new-game-btn">+ NEW</button><button id="refresh-btn">🔄</button></div>
+        </header>
+        <div class="filters">
+            <button class="filter-btn active">All</button><button class="filter-btn"><span class="coin-icon">💰</span> 20-100</button><button class="filter-btn"><span class="coin-icon">💰</span> 200-700</button><button class="filter-btn"><span class="coin-icon">💰</span> 1000+</button>
+        </div>
+        <div id="game-list" class="game-list"></div>
+    </div>
+
+    <!-- View 3: Create Game Screen (Hidden by default) -->
+    <div id="create-game-view" class="hidden">
+        <h2>Create a New Game</h2>
+        <div class="setting">
+            <label>Stake Amount (ETB)</label>
+            <div class="options" id="stake-options">
+                <button class="option-btn" data-stake="20">20</button><button class="option-btn active" data-stake="50">50</button><button class="option-btn" data-stake="100">100</button>
+            </div>
+            <input type="number" id="custom-stake-input" placeholder="Or enter a custom amount">
+        </div>
+        <div class="setting">
+            <label>Winning Condition</label>
+            <div class="options" id="win-options">
+                <button class="option-btn" data-win="1">1 Piece</button><button class="option-btn active" data-win="2">2 Pieces</button><button class="option-btn" data-win="4">Full House</button>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button id="cancel-create-btn">Cancel</button><button id="show-confirm-btn">Next</button>
+        </div>
+    </div>
+    
+    <!-- View 4: Confirmation Modal (Hidden by default) -->
+    <div id="confirm-modal-overlay" class="hidden">
+        <div id="confirm-modal">
+            <div class="modal-header"><h3>Confirm Game</h3><button id="close-modal-btn">×</button></div>
+            <div class="modal-body">
+                <div class="summary-card">
+                    <h4>Game Summary</h4>
+                    <div class="summary-details">
+                        <div class="detail-item"><span>👥 Players</span><strong id="summary-players">2</strong></div>
+                        <div class="detail-item"><span>💰 Stake</span><strong id="summary-stake">50 ETB</strong></div>
+                        <div class="detail-item"><span>👑 To Win</span><strong id="summary-win">2 Pieces</strong></div>
+                    </div>
+                </div>
+                <div class="prize-card">
+                    <h4>🏆 Total Prize</h4><p>Winner takes all</p><strong id="summary-prize">90 ETB</strong>
                 </div>
             </div>
-            <div class="header-actions">
-                <button id="new-game-btn">+ NEW</button>
-                <button id="refresh-btn">🔄</button>
+            <div class="modal-actions">
+                <button id="cancel-confirm-btn">Cancel</button><button id="confirm-create-btn">Create Game</button>
             </div>
-        </header>
-
-        <!-- Filter Buttons Section -->
-        <div class="filters">
-            <button class="filter-btn active">All</button>
-            <button class="filter-btn"><span class="coin-icon">💰</span> 20-100</button>
-            <button class="filter-btn"><span class="coin-icon">💰</span> 200-700</button>
-            <button class="filter-btn"><span class="coin-icon">💰</span> 1000+</button>
-        </div>
-
-        <!-- Game List Section -->
-        <div id="game-list" class="game-list">
-            <!-- JavaScript will load real game data here -->
         </div>
     </div>
 
