@@ -1,4 +1,4 @@
-# app.py (Final, Perfected, and Guaranteed Version)
+# app.py (The Final, Perfected, and Guaranteed Version)
 
 import logging
 import os
@@ -11,6 +11,7 @@ from telegram import Update
 from telegram.ext import Application
 from telegram.error import RetryAfter
 
+# --- Make sure all necessary components are imported ---
 from bot.handlers import setup_handlers
 from database_models.manager import get_db_session, games, users
 from sqlalchemy import select
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
-FRONTEND_URL = os.getenv("FRONTEND_URL") # We will add this to Render
+FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 # --- 2. LIFESPAN LOGIC (FOR STARTUP & SHUTDOWN) ---
 bot_app: Application | None = None
@@ -62,7 +63,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Yeab Game Zone API", lifespan=lifespan)
 
 # --- 4. CORS MIDDLEWARE (Security Permissions) ---
-# This must be defined before the API routes.
 if FRONTEND_URL:
     app.add_middleware(
         CORSMiddleware,
@@ -88,23 +88,36 @@ async def telegram_webhook(request: Request):
         logger.error("Error processing Telegram update", exc_info=True)
         return Response(status_code=500)
 
+# --- THIS IS THE FINAL, COMBINED, AND PERFECTED VERSION ---
 @app.get("/api/games")
 async def get_open_games():
-    """Endpoint for the web app to fetch open game lobbies."""
+    """
+    Endpoint for the web app to fetch open game lobbies.
+    It now includes the win_condition for the rich UI.
+    """
     live_games = []
     try:
         async with get_db_session() as session:
-            stmt = select(games.c.id, games.c.stake, games.c.pot, users.c.username).\
-                   join(users, games.c.creator_id == users.c.telegram_id).\
-                   where(games.c.status == 'lobby').order_by(games.c.created_at.desc())
+            stmt = select(
+                games.c.id, games.c.stake, games.c.pot, games.c.win_condition, users.c.username
+            ).\
+            join(users, games.c.creator_id == users.c.telegram_id).\
+            where(games.c.status == 'lobby').\
+            order_by(games.c.created_at.desc())
+            
             result = await session.execute(stmt)
+            
             for row in result.fetchall():
+                win_text = f"{row.win_condition} MMC በማሸነፍ"
+                
                 live_games.append({
                     "id": row.id,
-                    "creator_name": row.username or "Player",
-                    "creator_avatar": f"https://i.pravatar.cc/40?u={row.id}",
+                    "creator_name": row.username or "A Player",
+                    "creator_avatar": f"https://i.pravatar.cc/80?u={row.id}",
                     "stake": float(row.stake),
                     "prize": float(row.pot * 0.9),
+                    "win_condition_text": win_text,
+                    "win_condition_crowns": "👑" * row.win_condition,
                 })
     except Exception:
         logger.error("Database error fetching open games", exc_info=True)
@@ -118,47 +131,5 @@ async def health_check():
 
 
 # --- 6. MOUNT STATIC FILES (FOR WEB APP) ---
-# This is the "catch-all" general delivery box. It MUST be last.
-app.mount("/", StaticFiles(directory="frontend"), name="frontend")# In app.py, replace the existing get_open_games function
-
-@app.get("/api/games")
-async def get_open_games():
-    """
-    This endpoint now fetches REAL, live games from the database
-    that are in the 'lobby' state and returns them as JSON.
-    """
-    live_games = []
-    try:
-        async with get_db_session() as session:
-            # This query joins the games and users tables to get the creator's username
-            stmt = select(
-                games.c.id, 
-                games.c.stake, 
-                games.c.pot, 
-                games.c.win_condition, 
-                users.c.username
-            ).\
-            join(users, games.c.creator_id == users.c.telegram_id).\
-            where(games.c.status == 'lobby').\
-            order_by(games.c.created_at.desc()) # Show newest games first
-            
-            result = await session.execute(stmt)
-            
-            for row in result.fetchall():
-                # We build the response exactly as the frontend expects it
-                win_text = f"{row.win_condition} MMC በማሸነፍ" # "By winning X pieces"
-                
-                live_games.append({
-                    "id": row.id,
-                    "creator_name": row.username or "A Player",
-                    "creator_avatar": f"https://i.pravatar.cc/80?u={row.id}", # Placeholder avatar
-                    "stake": float(row.stake),
-                    "prize": float(row.pot * 0.9), # Calculate prize after 10% commission
-                    "win_condition_text": win_text,
-                    "win_condition_crowns": "👑" * row.win_condition
-                })
-    except Exception as e:
-        logger.error(f"Database error while fetching open games: {e}", exc_info=True)
-        return {"games": []} # Return an empty list if there is an error
-            
-    return {"games": live_games}
+# This is the "catch-all" and MUST be last.
+app.mount("/", StaticFiles(directory="frontend"), name="frontend")
