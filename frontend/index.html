@@ -1,137 +1,51 @@
+<!-- frontend/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yeab Game Zone</title>
-    
-    <link rel="stylesheet" href="styles.css?v=2">
-    
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        .loading-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            text-align: center;
-        }
-
-        /* Add this animation */
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .loading-logo.spinning {
-            animation: spin 2s linear infinite;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Make sure you are linking to your stylesheet -->
 </head>
 <body>
 
+    <!--
+      CORRECT STRUCTURE: All three main views are siblings.
+      Only one should be visible at a time.
+    -->
+
     <!-- View 1: Loading Screen (Visible by default) -->
-    <div id="loading-view" class="loading-container">
-        <div class="loading-logo spinning" style="font-size: 80px;">🎲</div>
-        <div class="loading-text">Yeab Games</div>
-        <div class="loading-status">Loading...</div>
+    <div id="loading-view">
+        <div class="dice-loader"></div>
+        <p>Yeab Games</p>
+        <p>Loading...</p>
     </div>
 
-    <!-- View 2: Main App Container (Lobby) -->
-    <div id="app-container" class="app-container hidden">
-        <header class="main-header">
-            <div class="header-left">
-                <div class="profile-icon">👤</div>
-                <div class="balance"><span class="coin-icon">💰</span><span>0.00</span></div>
-            </div>
-            <div class="header-actions">
-                <button id="new-game-btn">+ NEW</button>
-                <button id="refresh-btn">🔄</button>
-            </div>
-        </header>
-        <div class="filters" id="filters">
-            <button class="filter-btn active">All</button>
-            <button class="filter-btn"><span class="coin-icon">💰</span> 20-100</button>
-            <button class="filter-btn"><span class="coin-icon">💰</span> 200-700</button>
-            <button class="filter-btn"><span class="coin-icon">💰</span> 1000+</button>
+    <!-- View 2: Main App View (Hidden by default) -->
+    <div id="app-container" class="hidden">
+        <!-- Your header, balance, filters, and game list go here -->
+        <h2>Yeab Game Zone</h2>
+        <div id="game-list">
+            <!-- Game cards will be injected here by JavaScript -->
         </div>
-        <div id="game-list" class="game-list"></div>
+        <button id="new-game-btn">Create New Game</button>
+        <button id="refresh-btn">Refresh</button>
     </div>
-    
-    <!-- View 3: Create Game Screen -->
+
+    <!-- View 3: Create Game View (Hidden by default) -->
     <div id="create-game-view" class="hidden">
-        <h2>Create a New Game</h2>
-        <div class="setting">
-            <label>Stake Amount (ETB)</label>
-            <div class="options" id="stake-options">
-                <button class="option-btn" data-stake="20">20</button>
-                <button class="option-btn" data-stake="30">30</button>
-                <button class="option-btn active" data-stake="50">50</button>
-                <button class="option-btn" data-stake="100">100</button>
-                <button class="option-btn" data-stake="200">200</button>
-                <button class="option-btn" data-stake="300">300</button>
-                <button class="option-btn" data-stake="500">500</button>
-                <button class="option-btn" data-stake="1000">1000</button>
-            </div>
-            <input type="number" id="custom-stake-input" placeholder="Or enter a custom amount">
-        </div>
-        <div class="setting">
-            <label>Winning Condition</label>
-            <div class="options" id="win-options">
-                <button class="option-btn" data-win="1">1 Piece</button>
-                <button class="option-btn active" data-win="2">2 Pieces</button>
-                <button class="option-btn" data-win="4">Full House</button>
-            </div>
-        </div>
-        <div class="form-actions">
-            <button id="cancel-create-btn">Cancel</button>
-            <button id="show-confirm-btn">Next</button>
-        </div>
-    </div>
-    
-    <!-- View 4: Confirmation Modal -->
-    <div id="confirm-modal-overlay" class="hidden">
-        <div id="confirm-modal">
-            <div class="modal-header">
-                <h3>Confirm Game</h3>
-                <button id="close-modal-btn">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="summary-card">
-                    <h4>Game Summary</h4>
-                    <div class="summary-details">
-                        <div class="detail-item"><span>👥 Players</span><strong id="summary-players">2</strong></div>
-                        <div class="detail-item"><span>💰 Stake</span><strong id="summary-stake">50 ETB</strong></div>
-                        <div class="detail-item"><span>👑 To Win</span><strong id="summary-win">2 Pieces</strong></div>
-                    </div>
-                </div>
-                <div class="prize-card">
-                    <h4>🏆 Total Prize</h4>
-                    <p>Winner takes all</p>
-                    <strong id="summary-prize">90 ETB</strong>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button id="cancel-confirm-btn">Cancel</button>
-                <button id="confirm-create-btn">Create Game</button>
-            </div>
-        </div>
+        <h3>Create a New Game</h3>
+        <!-- All your stake and winning condition buttons go here -->
+        <p>Stake Amount (ETB)</p>
+        <!-- ... -->
+        <button id="cancel-create-btn">Cancel</button>
+        <button id="show-confirm-btn">Next</button>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Delay for 8 seconds (8000 milliseconds)
-            setTimeout(function() {
-                document.getElementById('loading-view').classList.add('hidden');
-                document.getElementById('app-container').classList.remove('hidden');
-            }, 8000);
-        });
-    </script>
+
+    <!-- Load Telegram and your app's script at the end -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
