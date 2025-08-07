@@ -1,15 +1,13 @@
-// frontend/app.js (Complete Frontend Code - FINAL, CORRECTED VERSION)
+// frontend/app.js (Complete Frontend Code - With Cold Start Handling)
 
 document.addEventListener('DOMContentLoaded', () => {
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
 
-    // --- 1. CRITICAL FIX: INJECTED YOUR WEB SERVICE URL ---
-    // The frontend will now correctly fetch data from your Python backend.
+    // The API URL is correct.
     const API_URL = 'https://yeab-kass.onrender.com/api/games';
 
-    // --- 2. Robust Element Finding Utility ---
     const getEl = (id) => document.getElementById(id);
 
     const loadingView = getEl('loading-view');
@@ -20,21 +18,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshBtn = getEl('refresh-btn');
     const cancelCreateBtn = getEl('cancel-create-btn');
 
-    // --- 3. View Management Function ---
     function showView(view) {
-        if (!view) return; // Prevent errors if a view is missing
+        if (!view) return;
         if (loadingView) loadingView.classList.add('hidden');
         if (appContainer) appContainer.classList.add('hidden');
         if (createGameView) createGameView.classList.add('hidden');
         view.classList.remove('hidden');
     }
 
-    // --- 4. Core Logic with Bulletproof Error Handling ---
+    // --- 4. Core Logic with Client-Side Timeout for Cold Starts ---
     function fetchGames() {
         showView(loadingView);
 
-        fetch(API_URL)
+        // This controller will allow us to cancel the fetch request after a timeout.
+        const controller = new AbortController();
+        const signal = controller.signal;
+
+        // Set a 15-second timeout.
+        const timeoutId = setTimeout(() => {
+            controller.abort(); // This will cancel the fetch request.
+        }, 15000); // 15 seconds
+
+        fetch(API_URL, { signal }) // Pass the abort signal to the fetch request.
             .then(response => {
+                // If we get a response, clear the timeout.
+                clearTimeout(timeoutId);
                 if (!response.ok) {
                     throw new Error(`Server error: ${response.status} ${response.statusText}`);
                 }
@@ -43,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 if (!gameList) return;
 
-                gameList.innerHTML = ''; // Clear previous list
+                gameList.innerHTML = '';
                 if (data.games && data.games.length > 0) {
                     data.games.forEach(game => {
                         const card = document.createElement('div');
@@ -69,11 +77,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 showView(appContainer);
             })
             .catch(error => {
-                console.error('CRITICAL FETCH ERROR:', error);
-                tg.showAlert(`Could not connect to the game server. Please check your internet connection and try again.\n\nError: ${error.message}`);
-                showView(appContainer);
-                if (gameList) {
-                    gameList.innerHTML = `<div class="error-message"><p>Could not load games.</p><p>Please tap the Refresh button to try again.</p></div>`;
+                clearTimeout(timeoutId); // Always clear the timeout on error.
+                
+                // Check if the error was caused by our timeout.
+                if (error.name === 'AbortError') {
+                    console.error('Fetch timed out (likely a cold start).');
+                    tg.showAlert('The server is starting up. This might take a moment. Please try again.');
+                    showView(appContainer);
+                    if (gameList) {
+                        gameList.innerHTML = `<div class="error-message"><p>Server is waking up...</p><p>Please tap Refresh in a few seconds.</p></div>`;
+                    }
+                } else {
+                    // Handle other errors (like network loss).
+                    console.error('CRITICAL FETCH ERROR:', error);
+                    tg.showAlert(`Could not connect to the game server.\n\nError: ${error.message}`);
+                    showView(appContainer);
+                    if (gameList) {
+                        gameList.innerHTML = `<div class="error-message"><p>Could not load games.</p><p>Please tap the Refresh button to try again.</p></div>`;
+                    }
                 }
             });
     }
