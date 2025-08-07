@@ -1,189 +1,141 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Initialize Telegram Web App ---
+    // --- Initialize Telegram ---
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
-    // Use the Telegram theme colors for a native feel
-    document.body.style.backgroundColor = tg.themeParams.bg_color || '#10101A';
-
+    
     // --- DOM Element References ---
-    const getEl = (id) => document.getElementById(id);
+    const getEl = id => document.getElementById(id);
     const loadingScreen = getEl('loading-screen');
     const mainApp = getEl('main-app');
     const gameListContainer = getEl('game-list-container');
-    const createGameModal = getEl('create-game-modal');
-    const newGameButton = getEl('new-game-button');
-    const closeModalButton = getEl('close-modal-button');
-    const cancelCreateButton = getEl('cancel-create-button');
-    const nextCreateButton = getEl('next-create-button');
-    const refreshButton = getEl('refresh-button');
-    const stakeOptionsContainer = getEl('stake-options');
+    const newGameBtn = getEl('new-game-btn');
+    
+    // Stake Modal Elements
+    const stakeModal = getEl('stake-modal');
+    const closeStakeModalBtn = getEl('close-stake-modal-btn');
+    const stakeOptionsGrid = getEl('stake-options-grid');
+    const cancelStakeBtn = getEl('cancel-stake-btn');
+    const nextStakeBtn = getEl('next-stake-btn');
+    
+    // Confirm Modal Elements
+    const confirmModal = getEl('confirm-modal');
+    const closeConfirmModalBtn = getEl('close-confirm-modal-btn');
+    const summaryStakeAmount = getEl('summary-stake-amount');
+    const winConditionOptions = getEl('win-condition-options');
+    const summaryPrizeAmount = getEl('summary-prize-amount');
+    const cancelConfirmBtn = getEl('cancel-confirm-btn');
+    const createGameBtn = getEl('create-game-btn');
 
-    // --- State Variables ---
+    // --- Application State ---
     let selectedStake = null;
-
-    // --- Mock API Data ---
-    // In a real app, this would come from your backend.
-    const MOCK_GAMES = [
-        { id: 1, username: '@Hd1***d', avatar: 'https://i.pravatar.cc/80?u=1', win_condition: 2, stake: 30, prize: 60 },
-        { id: 2, username: '@hag***y', avatar: 'https://i.pravatar.cc/80?u=2', win_condition: 2, stake: 500, prize: 1000 },
-        { id: 3, username: '@Mzm***5', avatar: 'https://i.pravatar.cc/80?u=3', win_condition: 1, stake: 500, prize: 1000 },
-    ];
+    let selectedWinCondition = null;
 
     // --- Functions ---
-
-    /**
-     * Renders the list of game cards or an empty state message.
-     * @param {Array} games - An array of game objects.
-     */
-    function renderGameList(games) {
-        gameListContainer.innerHTML = ''; // Clear previous content
-
-        if (!games || games.length === 0) {
-            gameListContainer.innerHTML = `
-                <div class="empty-state">
-                    <p>No open games found. Create one!</p>
-                    <button class="create-new-game-btn">🎮 New Game</button>
-                </div>
-            `;
-            // Add event listener to the new button inside the empty state
-            gameListContainer.querySelector('.create-new-game-btn').addEventListener('click', showCreateModal);
-            return;
-        }
-
-        games.forEach(game => {
-            const gameCard = document.createElement('div');
-            gameCard.className = 'game-card';
-            gameCard.innerHTML = `
-                <div class="card-left">
-                    <div class="player-avatar">
-                        <img src="${game.avatar}" alt="Avatar">
-                        <span class="star">⭐</span>
-                    </div>
-                    <span class="player-name">${game.username}</span>
-                </div>
-                <div class="card-center">
-                    <div class="crowns">${'👑'.repeat(game.win_condition)}</div>
-                    <div class="win-condition">${game.win_condition} MMC ግጥም</div>
-                </div>
-                <div class="card-right">
-                    <div>
-                        <div class="info-label">Stake</div>
-                        <div class="info-value">${game.stake} ብር</div>
-                    </div>
-                    <div>
-                        <div class="info-label">Prize</div>
-                        <div class="info-value prize">${game.prize} ብር</div>
-                    </div>
-                </div>
-            `;
-            const joinButton = document.createElement('button');
-            joinButton.className = 'join-button';
-            joinButton.textContent = 'Join';
-            joinButton.addEventListener('click', () => {
-                tg.showConfirm(`Join ${game.username}'s game for ${game.stake} ብር?`, (ok) => {
-                    if (ok) {
-                        tg.sendData(`join_game_${game.id}`);
-                        tg.close();
-                    }
-                });
-            });
-            // A more complex layout might need a different structure, this is one way
-            const rightSide = gameCard.querySelector('.card-right');
-            const newRightContainer = document.createElement('div');
-            newRightContainer.style.textAlign = 'right';
-            newRightContainer.appendChild(rightSide);
-            newRightContainer.appendChild(joinButton);
-            gameCard.appendChild(newRightContainer);
-            
-            gameListContainer.appendChild(gameCard);
-        });
-    }
-    
-    /**
-     * Fetches game data (currently uses mock data).
-     */
-    function fetchGames() {
-        // In a real app, you would use fetch() here:
-        // fetch('YOUR_API_ENDPOINT')
-        //   .then(response => response.json())
-        //   .then(data => renderGameList(data.games));
-        renderGameList(MOCK_GAMES);
-    }
-    
-    /**
-     * Shows the main application and hides the loading screen.
-     */
-    function showApp() {
+    const showApp = () => {
         loadingScreen.classList.add('hidden');
         mainApp.classList.remove('hidden');
-        fetchGames();
-    }
+        renderGameList([]); // Initially render an empty list
+    };
 
-    /**
-     * Shows the game creation modal.
-     */
-    function showCreateModal() {
-        createGameModal.classList.remove('hidden');
-        mainApp.style.filter = 'blur(5px)';
-    }
-
-    /**
-     * Hides the game creation modal.
-     */
-    function hideCreateModal() {
-        createGameModal.classList.add('hidden');
-        mainApp.style.filter = 'none';
-        // Reset selection
-        const currentSelected = stakeOptionsContainer.querySelector('.selected');
-        if (currentSelected) {
-            currentSelected.classList.remove('selected');
+    const renderGameList = (games) => {
+        gameListContainer.innerHTML = '';
+        if (games.length === 0) {
+            gameListContainer.innerHTML = `
+                <h3 class="empty-state-title">Create New Game</h3>
+                <button id="empty-state-new-game-btn" class="empty-state-btn">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.41,11.58l-9-9C12.05,2.22,11.55,2,11,2H4C2.9,2,2,2.9,2,4v7c0,0.55,0.22,1.05,0.59,1.42l9,9c0.36,0.36,0.86,0.58,1.41,0.58s1.05-0.22,1.41-0.59l7-7C22.19,13.68,22.19,12.32,21.41,11.58z M12.5,13.5c-0.83,0-1.5-0.67-1.5-1.5s0.67-1.5,1.5-1.5s1.5,0.67,1.5,1.5S13.33,13.5,12.5,13.5z"/></svg>
+                    New Game
+                </button>`;
+            getEl('empty-state-new-game-btn').addEventListener('click', showStakeModal);
+        } else {
+            // Logic to render actual game cards would go here
         }
-        nextCreateButton.disabled = true;
+    };
+    
+    const showStakeModal = () => {
+        mainApp.style.filter = 'blur(5px)';
+        stakeModal.classList.remove('hidden');
+    };
+    
+    const hideStakeModal = () => {
+        mainApp.style.filter = 'none';
+        stakeModal.classList.add('hidden');
+        // Reset stake selection
+        const currentSelected = stakeOptionsGrid.querySelector('.selected');
+        if (currentSelected) currentSelected.classList.remove('selected');
+        nextStakeBtn.disabled = true;
         selectedStake = null;
-    }
+    };
+    
+    const showConfirmModal = () => {
+        hideStakeModal();
+        mainApp.style.filter = 'blur(5px)';
+        confirmModal.classList.remove('hidden');
+        updateSummary();
+    };
+    
+    const hideConfirmModal = () => {
+        mainApp.style.filter = 'none';
+        confirmModal.classList.add('hidden');
+        // Reset win condition selection
+        const currentSelected = winConditionOptions.querySelector('.selected');
+        if (currentSelected) currentSelected.classList.remove('selected');
+        createGameBtn.disabled = true;
+        selectedWinCondition = null;
+    };
+    
+    const updateSummary = () => {
+        if (!selectedStake) return;
+        const prize = selectedStake * 2 * 0.9; // Assuming 10% commission
+        summaryStakeAmount.textContent = `Stake: ${selectedStake} ETB`;
+        summaryPrizeAmount.textContent = `${prize.toFixed(2)} ETB`;
+    };
 
     // --- Event Listeners ---
+    setTimeout(showApp, 8000); // 8-second loading screen
+    newGameBtn.addEventListener('click', showStakeModal);
 
-    // Show app after the 8-second loading animation
-    setTimeout(showApp, 8000);
+    // Stake Modal Listeners
+    closeStakeModalBtn.addEventListener('click', hideStakeModal);
+    cancelStakeBtn.addEventListener('click', hideStakeModal);
+    nextStakeBtn.addEventListener('click', showConfirmModal);
+    stakeOptionsGrid.addEventListener('click', (e) => {
+        const button = e.target.closest('.option-btn');
+        if (!button) return;
+        
+        const currentSelected = stakeOptionsGrid.querySelector('.selected');
+        if (currentSelected) currentSelected.classList.remove('selected');
+        
+        button.classList.add('selected');
+        selectedStake = parseInt(button.dataset.stake);
+        nextStakeBtn.disabled = false;
+    });
 
-    // Main interaction buttons
-    newGameButton.addEventListener('click', showCreateModal);
-    refreshButton.addEventListener('click', fetchGames);
+    // Confirm Modal Listeners
+    closeConfirmModalBtn.addEventListener('click', hideConfirmModal);
+    cancelConfirmBtn.addEventListener('click', hideConfirmModal);
+    winConditionOptions.addEventListener('click', (e) => {
+        const button = e.target.closest('.win-option-btn');
+        if (!button) return;
+        
+        const currentSelected = winConditionOptions.querySelector('.selected');
+        if (currentSelected) currentSelected.classList.remove('selected');
+        
+        button.classList.add('selected');
+        selectedWinCondition = parseInt(button.dataset.win);
+        createGameBtn.disabled = false; // Enable create button once win condition is set
+    });
     
-    // Modal interaction buttons
-    closeModalButton.addEventListener('click', hideCreateModal);
-    cancelCreateButton.addEventListener('click', hideCreateModal);
-    nextCreateButton.addEventListener('click', () => {
-        if (selectedStake) {
-            tg.showConfirm(`Create a new game with a stake of ${selectedStake} ብር?`, (ok) => {
+    createGameBtn.addEventListener('click', () => {
+        if (selectedStake && selectedWinCondition) {
+            tg.showConfirm(`Create game with ${selectedStake} ETB stake and ${selectedWinCondition} piece win condition?`, (ok) => {
                 if (ok) {
-                    // Send data to your bot
-                    tg.sendData(`create_game_stake_${selectedStake}`);
-                    hideCreateModal();
-                    // Optionally show a success message
-                    tg.showAlert('Your game has been created!');
+                    tg.sendData(`create_game:stake_${selectedStake}:win_${selectedWinCondition}`);
+                    hideConfirmModal();
+                    tg.showAlert('Your game has been created successfully!');
                 }
             });
         }
     });
-
-    // Handle stake selection
-    stakeOptionsContainer.addEventListener('click', (event) => {
-        const button = event.target.closest('.option-button');
-        if (!button) return;
-
-        // Remove previous selection
-        const currentSelected = stakeOptionsContainer.querySelector('.selected');
-        if (currentSelected) {
-            currentSelected.classList.remove('selected');
-        }
-
-        // Add new selection
-        button.classList.add('selected');
-        selectedStake = button.dataset.stake;
-        nextCreateButton.disabled = false;
-    });
-
 });
