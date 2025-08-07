@@ -1,141 +1,18 @@
-// /frontend/app.js (The Final, Complete, and Fully Functional Version)
+/* frontend/styles.css */
 
-document.addEventListener('DOMContentLoaded', () => {
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+/* Add this rule to your CSS file. It is the key to hiding and showing views. */
+.hidden {
+    display: none !important;
+}
 
-    // --- 1. CRITICAL: VERIFY THIS URL ---
-    // This MUST be the URL of your Python backend service.
-    const API_URL = 'https://yeab-kass.onrender.com/api/games';
+/* --- Keep all your other styles below --- */
 
-    // --- 2. Get references to all elements ---
-    const getEl = (id) => document.getElementById(id);
+body {
+    /* ... your existing body styles ... */
+}
 
-    const loadingView = getEl('loading-view');
-    const appContainer = getEl('app-container');
-    const createGameView = getEl('create-game-view');
-    const confirmModalOverlay = getEl('confirm-modal-overlay');
+.game-card {
+    /* ... your existing card styles ... */
+}
 
-    const gameList = getEl('game-list');
-    const newGameBtn = getEl('new-game-btn');
-    const refreshBtn = getEl('refresh-btn');
-    const filtersContainer = getEl('filters');
-    const stakeOptions = getEl('stake-options');
-    const customStakeInput = getEl('custom-stake-input');
-    const winOptions = getEl('win-options');
-    const cancelCreateBtn = getEl('cancel-create-btn');
-    const showConfirmBtn = getEl('show-confirm-btn');
-    const closeModalBtn = getEl('close-modal-btn');
-    const cancelConfirmBtn = getEl('cancel-confirm-btn');
-    const confirmCreateBtn = getEl('confirm-create-btn');
-    const summaryStake = getEl('summary-stake');
-    const summaryWin = getEl('summary-win');
-    const summaryPrize = getEl('summary-prize');
-
-    let selectedStake = 50;
-    let selectedWin = 2;
-
-    // --- 3. View Management ---
-    function showView(view) {
-        if (!view) return;
-        loadingView.classList.add('hidden');
-        appContainer.classList.add('hidden');
-        createGameView.classList.add('hidden');
-        view.classList.remove('hidden');
-    }
-
-    // --- 4. Core Fetch Logic ---
-    function fetchGames() {
-        // ... (The fetchGames function is unchanged and perfect)
-    }
-
-    // --- 5. Event Listeners (NOW COMPLETE AND FUNCTIONAL) ---
-    
-    // -- Main Lobby Buttons --
-    if(newGameBtn) newGameBtn.addEventListener('click', () => showView(createGameView));
-    if(cancelCreateBtn) cancelCreateBtn.addEventListener('click', () => showView(appContainer));
-    if(refreshBtn) refreshBtn.addEventListener('click', fetchGames);
-
-    if(filtersContainer) filtersContainer.addEventListener('click', (event) => {
-        if (event.target.classList.contains('filter-btn')) {
-            filtersContainer.querySelector('.active')?.classList.remove('active');
-            event.target.classList.add('active');
-        }
-    });
-
-    // --- THIS IS THE FINAL, WORKING CODE FOR THE CREATE GAME SCREEN ---
-    
-    // Handle stake preset button clicks
-    if(stakeOptions) stakeOptions.addEventListener('click', e => {
-        if (e.target.classList.contains('option-btn')) {
-            stakeOptions.querySelector('.active')?.classList.remove('active');
-            e.target.classList.add('active');
-            customStakeInput.value = ''; // Clear custom input
-            selectedStake = e.target.getAttribute('data-stake');
-        }
-    });
-
-    // Handle win condition button clicks
-    if(winOptions) winOptions.addEventListener('click', e => {
-        if (e.target.classList.contains('option-btn')) {
-            winOptions.querySelector('.active')?.classList.remove('active');
-            e.target.classList.add('active');
-            selectedWin = e.target.getAttribute('data-win');
-        }
-    });
-
-    // Handle typing in the custom stake input
-    if(customStakeInput) customStakeInput.addEventListener('input', () => {
-        if (customStakeInput.value) {
-            stakeOptions.querySelector('.active')?.classList.remove('active');
-            selectedStake = customStakeInput.value;
-        }
-    });
-    
-    // Show the confirmation modal when "Next" is clicked
-    if(showConfirmBtn) showConfirmBtn.addEventListener('click', () => {
-        const stakeValue = customStakeInput.value || selectedStake;
-
-        if (!stakeValue || isNaN(stakeValue) || parseInt(stakeValue) <= 0) {
-            tg.showAlert('Please select or enter a valid stake amount.');
-            return;
-        }
-        
-        selectedStake = parseInt(stakeValue);
-        selectedWin = parseInt(winOptions.querySelector('.active').getAttribute('data-win'));
-        const prizeValue = (selectedStake * 2 * 0.9).toFixed(2);
-
-        summaryStake.textContent = `${selectedStake} ETB`;
-        summaryWin.textContent = `${selectedWin} Piece(s)`;
-        summaryPrize.textContent = `${prizeValue} ETB`;
-        
-        appContainer.classList.add('blurred');
-        createGameView.classList.add('blurred');
-        confirmModalOverlay.classList.remove('hidden');
-    });
-
-    // Functions to hide the modal
-    function hideModal() {
-        confirmModalOverlay.classList.add('hidden');
-        appContainer.classList.remove('blurred');
-        createGameView.classList.remove('blurred');
-    }
-    if(closeModalBtn) closeModalBtn.addEventListener('click', hideModal);
-    if(cancelConfirmBtn) cancelConfirmBtn.addEventListener('click', hideModal);
-
-    // Send data to the bot when "Create Game" is clicked
-    if(confirmCreateBtn) confirmCreateBtn.addEventListener('click', () => {
-        const data = `create_game_stake_${selectedStake}_win_${selectedWin}`;
-        tg.sendData(data);
-        // We no longer close the app, allowing the user to see the bot's response
-    });
-
-    // --- 6. Initial Load ---
-    if(loadingView) {
-        showView(loadingView);
-        setTimeout(fetchGames, 1500); // Start fetching after 1.5 seconds
-    } else {
-        fetchGames();
-    }
-});
+/* etc. */
