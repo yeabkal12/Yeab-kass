@@ -1,18 +1,354 @@
-/* frontend/styles.css */
+/* Using a modern, clean font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-/* Add this rule to your CSS file. It is the key to hiding and showing views. */
+:root {
+    --background-dark: #10101A;
+    --primary-dark: #1A1A2E;
+    --card-dark: #16213E;
+    --accent-blue: #4A47A3;
+    --accent-purple: #706FD3;
+    --accent-green: #27AE60;
+    --accent-red: #E94560;
+    --accent-gold: #F7B731;
+    --text-primary: #FFFFFF;
+    --text-secondary: #EAEAEA;
+    --text-muted: #8F8F8F;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--primary-dark);
+    color: var(--text-primary);
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* --- UTILITY CLASS --- */
 .hidden {
     display: none !important;
 }
 
-/* --- Keep all your other styles below --- */
-
-body {
-    /* ... your existing body styles ... */
+/* --- LOADING SCREEN --- */
+#loading-screen {
+    position: fixed;
+    inset: 0;
+    background-color: #000000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.loading-content {
+    text-align: center;
+}
+.loading-dice {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+}
+.loading-text {
+    margin-top: 15px;
+    font-size: 1.1em;
+    color: var(--text-muted);
+}
+.loading-bar-container {
+    width: 120px;
+    height: 4px;
+    background-color: #333;
+    border-radius: 2px;
+    margin: 20px auto 0;
+    overflow: hidden;
+}
+.loading-bar-motion {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+    animation: loading-motion 8s linear forwards;
+}
+@keyframes loading-motion {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
 }
 
+/* --- MAIN APP --- */
+#main-app {
+    padding: 15px;
+}
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--accent-blue);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.user-avatar svg {
+    width: 24px;
+    height: 24px;
+    color: var(--text-primary);
+}
+.user-balance {
+    background-color: var(--card-dark);
+    padding: 8px 12px;
+    border-radius: 18px;
+    font-weight: 600;
+    font-size: 0.9em;
+}
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+.action-button {
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+.action-button svg {
+    width: 20px;
+    height: 20px;
+}
+.new-button {
+    background-color: var(--accent-green);
+    padding-right: 15px;
+}
+.refresh-button {
+    background-color: var(--card-dark);
+}
+
+/* Filters */
+.filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    overflow-x: auto; /* For small screens */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+.filters::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome, Safari and Opera */
+}
+.filter-button {
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    background-color: var(--card-dark);
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    font-weight: 500;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.filter-button.active {
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+    color: var(--text-primary);
+}
+
+/* Game List */
+#game-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
 .game-card {
-    /* ... your existing card styles ... */
+    background-color: var(--card-dark);
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.card-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.player-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    position: relative;
+}
+.player-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+}
+.player-avatar .star {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 1.2em;
+}
+.player-name {
+    font-weight: 600;
+}
+.card-center {
+    text-align: center;
+}
+.crowns {
+    font-size: 1.5em;
+    color: var(--accent-gold);
+}
+.win-condition {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.card-right {
+    text-align: right;
+}
+.info-label {
+    font-size: 0.8em;
+    color: var(--text-muted);
+}
+.info-value {
+    font-weight: 600;
+}
+.prize {
+    color: var(--accent-green);
+}
+.join-button {
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+    color: var(--text-primary);
+    padding: 10px 25px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
 }
 
-/* etc. */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+}
+.empty-state p {
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+.empty-state .create-new-game-btn {
+    border: none;
+    border-radius: 12px;
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+    cursor: pointer;
+}
+
+/* --- CREATE GAME MODAL --- */
+#create-game-modal {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 500;
+    backdrop-filter: blur(5px);
+}
+.modal-content {
+    background-color: var(--primary-dark);
+    width: 100%;
+    padding: 20px;
+    border-radius: 20px 20px 0 0;
+    position: relative;
+}
+.close-modal-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.close-modal-button svg {
+    width: 28px;
+    height: 28px;
+}
+.modal-content h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 25px;
+}
+.option-button {
+    border: 1px solid var(--card-dark);
+    background-color: transparent;
+    border-radius: 10px;
+    padding: 15px 5px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 1em;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+.option-button.selected {
+    border-color: var(--accent-blue);
+    background-color: var(--accent-blue);
+    color: var(--text-primary);
+    transform: scale(1.05);
+}
+.option-button small {
+    font-weight: 400;
+    color: var(--text-muted);
+}
+.modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+.modal-action-button {
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+}
+.cancel {
+    background-color: var(--accent-red);
+    color: var(--text-primary);
+}
+.next {
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+    color: var(--text-primary);
+}
+.next:disabled {
+    background: var(--card-dark);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
