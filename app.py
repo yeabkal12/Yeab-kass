@@ -5,7 +5,6 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response, status
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from telegram import Update
 from telegram.ext import Application
@@ -22,7 +21,9 @@ logger = logging.getLogger(__name__)
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
-FRONTEND_URL = os.getenv("FRONTEND_URL")
+# This is the address of your separate frontend Static Site on Render
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://yeab-kass-1.onrender.com")
+
 
 # --- 2. LIFESPAN LOGIC (FOR STARTUP & SHUTDOWN) ---
 bot_app: Application | None = None
@@ -59,10 +60,12 @@ async def lifespan(app: FastAPI):
     if bot_app:
         await bot_app.shutdown()
 
+
 # --- 3. FASTAPI APP INITIALIZATION ---
 app = FastAPI(title="Yeab Game Zone API", lifespan=lifespan)
 
 # --- 4. CORS MIDDLEWARE (Security Permissions) ---
+# This is the critical fix that allows your frontend to talk to your backend.
 if FRONTEND_URL:
     app.add_middleware(
         CORSMiddleware,
@@ -73,7 +76,6 @@ if FRONTEND_URL:
     )
 
 # --- 5. API ENDPOINTS ---
-# All specific API routes must be defined BEFORE the general static file mount.
 
 @app.post("/api/telegram/webhook")
 async def telegram_webhook(request: Request):
@@ -88,7 +90,7 @@ async def telegram_webhook(request: Request):
         logger.error("Error processing Telegram update", exc_info=True)
         return Response(status_code=500)
 
-# --- THIS IS THE FINAL, COMBINED, AND PERFECTED VERSION ---
+# --- THIS IS THE FINAL, COMBINED, AND PERFECTED VERSION OF YOUR /api/games ENDPOINT ---
 @app.get("/api/games")
 async def get_open_games():
     """
@@ -130,6 +132,6 @@ async def health_check():
     return {"status": "healthy"}
 
 
-# --- 6. MOUNT STATIC FILES (FOR WEB APP) ---
-# This is the "catch-all" and MUST be last.
-app.mount("/", StaticFiles(directory="frontend"), name="frontend")
+# --- NOTE ---
+# The `app.mount("/", ...)` line is correctly and permanently removed.
+# This file is now a pure API backend.
