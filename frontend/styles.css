@@ -51,7 +51,24 @@ body {
 
 /* --- Filters & Empty State --- */
 .filters { display: flex; gap: 10px; margin-bottom: 20px; }
-.filter-button { border: none; border-radius: 20px; padding: 8px 16px; background-color: var(--card-dark); color: var(--text-secondary); font-size: 0.9em; font-weight: 500; cursor: pointer; }
+.filter-button { border: none; border-radius: 20px; padding: 8px 16px; background-color: var(--card-dark); color: var(--text-secondary); font-size: 0.9em; font-weight: 500; cursor: pointer; }/* frontend/styles.css */
+
+/* --- Add this rule to your existing CSS file --- */
+
+/* This style will be applied by JavaScript when a filter is selected. */
+.filter-button.active {
+    background: linear-gradient(90deg, #4A47A3, #706FD3); /* Blue-to-purple gradient */
+    color: #FFFFFF; /* White text */
+    font-weight: 600;
+}
+
+/* --- All your other styles remain the same --- */
+:root {
+    --primary-dark: #1A1A2E;
+    --card-dark: #1D1D34;
+    /* ...etc */
+}
+/* ... */
 .filter-button.active { background: var(--gradient-button); color: var(--text-primary); }
 #game-list-container { text-align: center; }
 .empty-state-title { font-size: 1.1em; font-weight: 500; color: var(--text-muted); margin: 40px 0 20px 0; }
