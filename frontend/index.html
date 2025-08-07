@@ -16,11 +16,19 @@
     <!-- ============================================= -->
     <div id="loading-screen">
         <div class="loading-content">
-            <img src="https://www.animatedimages.org/data/media/710/animated-dice-image-0037.gif" alt="Rolling Dice" class="loading-dice"/>
-            <div class="loading-bar-container">
-                <div class="loading-bar-motion"></div>
+            <svg class="loading-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 5L15.45 27.5V72.5L50 95L84.55 72.5V27.5L50 5Z" stroke="white" stroke-width="3"/>
+                <path d="M50 5L50 95" stroke="white" stroke-width="1.5"/>
+                <path d="M15.45 27.5L84.55 72.5" stroke="white" stroke-width="1.5"/>
+                <path d="M15.45 72.5L84.55 27.5" stroke="white" stroke-width="1.5"/>
+                <path d="M15.45 27.5L50 50L15.45 72.5" stroke="white" stroke-width="1.5"/>
+                <path d="M84.55 27.5L50 50L84.55 72.5" stroke="white" stroke-width="1.5"/>
+            </svg>
+            <h1 class="brand-name">yaba Games</h1>
+            <div class="progress-bar-container">
+                <div class="progress-bar-motion"></div>
             </div>
-            <p class="loading-text">Loading Games...</p>
+            <p class="status-text">Loading...</p>
         </div>
     </div>
 
@@ -39,11 +47,11 @@
                 </div>
             </div>
             <div class="header-actions">
-                <button id="new-game-button" class="action-button new-button">
+                <button id="new-game-btn" class="action-button new-button">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path></svg>
                     NEW
                 </button>
-                <button id="refresh-button" class="action-button refresh-button">
+                <button id="refresh-btn" class="action-button refresh-button">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"></path></svg>
                 </button>
             </div>
@@ -53,40 +61,87 @@
             <button class="filter-button active">All</button>
             <button class="filter-button">💰 20-100</button>
             <button class="filter-button">💰 200-700</button>
-            <button class="filter-button">💰 1000+</button>
+            <button class="filter-button">💰 1000</button>
         </div>
 
         <div id="game-list-container">
-            <!-- Game cards will be injected here -->
+            <!-- Game cards or empty state injected here -->
         </div>
     </div>
 
     <!-- ============================================= -->
-    <!-- ======== 3. CREATE GAME MODAL VIEW ========== -->
+    <!-- ======== 3. STAKE SELECTION MODAL =========== -->
     <!-- ============================================= -->
-    <div id="create-game-modal" class="hidden">
+    <div id="stake-modal" class="modal-overlay hidden">
         <div class="modal-content">
-            <button id="close-modal-button" class="close-modal-button">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
-            </button>
+            <div class="modal-handle"></div>
+            <button id="close-stake-modal-btn" class="close-modal-btn">&times;</button>
             <h2>Stake Amount</h2>
-            <div id="stake-options" class="options-grid">
-                <button class="option-button" data-stake="20">💰 20 <small>ብር</small></button>
-                <button class="option-button" data-stake="30">💰 30 <small>ብር</small></button>
-                <button class="option-button" data-stake="50">💰 50 <small>ብር</small></button>
-                <button class="option-button" data-stake="100">💰 100 <small>ብር</small></button>
-                <button class="option-button" data-stake="200">💰 200 <small>ብር</small></button>
-                <button class="option-button" data-stake="300">💰 300 <small>ብር</small></button>
-                <button class="option-button" data-stake="500">💰 500 <small>ብር</small></button>
-                <button class="option-button" data-stake="700">💰 700 <small>ብር</small></button>
-                <button class="option-button" data-stake="1000">💰 1000 <small>ብር</small></button>
+            <div id="stake-options-grid" class="options-grid">
+                <button class="option-btn" data-stake="20">💰 20 <small>ብር</small></button>
+                <button class="option-btn" data-stake="30">💰 30 <small>ብር</small></button>
+                <button class="option-btn" data-stake="50">💰 50 <small>ብር</small></button>
+                <button class="option-btn" data-stake="100">💰 100 <small>ብር</small></button>
+                <button class="option-btn" data-stake="200">💰 200 <small>ብር</small></button>
+                <button class="option-btn" data-stake="300">💰 300 <small>ብር</small></button>
+                <button class="option-btn" data-stake="500">💰 500 <small>ብር</small></button>
+                <button class="option-btn" data-stake="700">💰 700 <small>ብር</small></button>
+                <button class="option-btn" data-stake="1000">💰 1000 <small>ብር</small></button>
             </div>
             <div class="modal-actions">
-                <button id="cancel-create-button" class="modal-action-button cancel">Cancel</button>
-                <button id="next-create-button" class="modal-action-button next" disabled>Next</button>
+                <button id="cancel-stake-btn" class="modal-action-btn cancel">Cancel</button>
+                <button id="next-stake-btn" class="modal-action-btn next" disabled>Next</button>
             </div>
         </div>
     </div>
+    
+    <!-- ============================================= -->
+    <!-- ======== 4. CONFIRMATION MODAL ============== -->
+    <!-- ============================================= -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-handle"></div>
+            <button id="close-confirm-modal-btn" class="close-modal-btn">&times;</button>
+            <h2>Confirm</h2>
+            <div class="summary-container">
+                <div class="summary-header">
+                    <span>🎮 Game Summary</span>
+                    <span id="summary-stake-amount">Stake: 0 ETB</span>
+                </div>
+                <div class="summary-details">
+                    <div class="summary-box">
+                        <span class="summary-icon">👥</span>
+                        <label>Players</label>
+                        <strong>2</strong>
+                    </div>
+                    <div class="summary-box">
+                        <span class="summary-icon">👑</span>
+                        <label>To Win</label>
+                        <div id="win-condition-options" class="win-condition-selector">
+                            <button class="win-option-btn" data-win="1">1 Piece</button>
+                            <button class="win-option-btn" data-win="2">2 Pieces</button>
+                            <button class="win-option-btn" data-win="4">4 Pieces</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="summary-prize">
+                    <div class="prize-info">
+                        <span class="summary-icon">🏆</span>
+                        <div>
+                            <label>Total Prize</label>
+                            <small>Winner takes all</small>
+                        </div>
+                    </div>
+                    <strong id="summary-prize-amount">0 ETB</strong>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-confirm-btn" class="modal-action-btn cancel">Cancel</button>
+                <button id="create-game-btn" class="modal-action-btn next" disabled>Create Game</button>
+            </div>
+        </div>
+    </div>
+
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="app.js"></script>
