@@ -1,96 +1,95 @@
-# app.py (The Real-Time Backend)
+# app.py (The Final, Complete, and Corrected Version)
 
-import asyncio
-import json
 import logging
-from typing import Dict, List
-import uuid
+import os
+import json
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, Request, Response, status
+from telegram import Update
+from telegram.ext import Application
 
+# --- Mock or Import Your Bot's Command Handlers ---
+# This assumes you have your 'start' function defined elsewhere.
+try:
+    from bot.handlers import setup_handlers
+    BOT_ENABLED = True
+except ImportError:
+    BOT_ENABLED = False
+    logging.warning("Bot handlers not found. Bot will be in a limited mode.")
+# ---
+
+# --- 1. Setup & Configuration ---
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# --- In-Memory Storage (for this example) ---
-# In a real app, this would be your database.
-active_games: Dict[str, Dict] = {}
-
-class ConnectionManager:
-    """Manages active WebSocket connections."""
-    def __init__(self):
-        self.active_connections: List[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
-
-    async def broadcast(self, message: str):
-        for connection in self.active_connections:
-            await connection.send_text(message)
-
-manager = ConnectionManager()
-app = FastAPI(title="Real-Time Game Lobby API")
-
-# --- Add CORS middleware to allow connections from your frontend ---
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# These environment variables MUST be set on your Render server.
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+# The value for WEBHOOK_URL on Render should be: https://yeab-kass.onrender.com
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    logging.info("New client connected.")
+# --- 2. Global Application Instances ---
+bot_app: Application | None = None
+
+
+# --- 3. Lifespan Manager (Sets the Webhook on Startup) ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Handles critical startup and shutdown events."""
+    logger.info("Application startup...")
+    if bot_app and WEBHOOK_URL:
+        # This is where your URL is necessary. It builds the full webhook address.
+        webhook_full_url = f"{WEBHOOK_URL}/api/telegram/webhook"
+        
+        await bot_app.initialize()
+        try:
+            # Tell Telegram where to send updates.
+            await bot_app.bot.set_webhook(url=webhook_full_url, allowed_updates=Update.ALL_TYPES)
+            logger.info(f"SUCCESS: Webhook set to -> {webhook_full_url}")
+        except Exception as e:
+            logger.error(f"FATAL: Could not set webhook to {webhook_full_url}: {e}")
+    elif not WEBHOOK_URL:
+         logger.error("FATAL: WEBHOOK_URL environment variable is not set!")
+            
+    yield  # The application is now running
     
-    # Send the current list of active games to the newly connected client
-    initial_data = {"event": "initial_game_list", "games": list(active_games.values())}
-    await websocket.send_text(json.dumps(initial_data))
+    logger.info("Application shutdown...")
+    if bot_app:
+        await bot_app.shutdown()
 
+
+# --- 4. Main FastAPI Application Initialization ---
+app = FastAPI(title="Yeab Game Zone API", lifespan=lifespan)
+
+if TELEGRAM_BOT_TOKEN and BOT_ENABLED:
+    ptb_builder = Application.builder().token(TELEGRAM_BOT_TOKEN)
+    bot_app = setup_handlers(ptb_builder.build()) # setup_handlers should add your 'start' command
+    logger.info("Telegram bot application created and handlers attached.")
+else:
+    logger.error("FATAL: Bot is disabled. Check TELEGRAM_BOT_TOKEN and handler imports.")
+
+
+# --- 5. API Endpoints ---
+
+# THIS IS THE FIX FOR YOUR "404 NOT FOUND" ERROR
+@app.post("/api/telegram/webhook")
+async def telegram_webhook(request: Request):
+    """This function now correctly listens for messages from Telegram."""
+    if not bot_app:
+        logger.error("Webhook called, but bot is not initialized.")
+        return Response(status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
     try:
-        while True:
-            data_str = await websocket.receive_text()
-            data = json.loads(data_str)
-            action = data.get("action")
-
-            if action == "create_game":
-                game_id = str(uuid.uuid4())
-                new_game = {
-                    "id": game_id,
-                    "stake": data["stake"],
-                    "winCondition": data["winCondition"],
-                    "prize": int(data["stake"] * 2 * 0.9), # Calculate prize on server
-                    "creator": "Player" + str(len(manager.active_connections)) # Example username
-                }
-                active_games[game_id] = new_game
-                logging.info(f"Game created: {new_game}")
-                
-                # Broadcast the new game to all clients
-                await manager.broadcast(json.dumps({"event": "new_game", "game": new_game}))
-
-            elif action == "join_game" or action == "cancel_game":
-                game_id = data.get("gameId")
-                if game_id in active_games:
-                    del active_games[game_id]
-                    logging.info(f"Game removed: {game_id}")
-                    # Broadcast the removal to all clients
-                    await manager.broadcast(json.dumps({"event": "remove_game", "gameId": game_id}))
-
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        logging.info("Client disconnected.")
+        data = await request.json()
+        update = Update.de_json(data, bot_app.bot)
+        await bot_app.process_update(update)
+        return Response(status_code=status.HTTP_200_OK)
     except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        manager.disconnect(websocket)
+        logger.error(f"Error processing webhook update: {e}", exc_info=True)
+        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@app.get("/")
-def read_root():
-    return {"status": "Lobby server is running"}
 
-# To run this server: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+@app.get("/health")
+async def health_check():
+    """A simple health check endpoint for Render to use."""
+    return {"status": "healthy", "bot_initialized": bool(bot_app)}
