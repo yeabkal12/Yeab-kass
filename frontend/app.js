@@ -1,4 +1,4 @@
-// frontend/app.js (The Definitive Fix with All Logic Implemented)
+// frontend/app.js (The Definitive Version with All Logic & Scenarios Implemented)
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Initialize Telegram & Basic Setup ---
@@ -27,13 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Application State ---
     let selectedStake = null;
-    let selectedWinCondition = null;
+    let selectedWinCondition = null; // Will store the number (1, 2, or 4)
     let socket = null;
     let allGames = [];
 
     // --- WebSocket Logic ---
     function connectWebSocket() {
         socket = new WebSocket("wss://yeab-kass.onrender.com/ws");
+
         socket.onopen = () => console.log("WebSocket connection established.");
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
@@ -56,11 +57,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- UI Rendering ---
+    
+    /**
+     * [FINAL] Creates a game card with the correct dynamic Amharic win condition.
+     */
     const createGameCardElement = (game) => {
         const card = document.createElement('div');
         card.className = 'game-card';
         card.id = `game-${game.id}`;
         const maskedUsername = game.creator ? game.creator.substring(0, 4) + '***' + game.creator.slice(-1) : 'Player***';
+        
+        // This dynamically displays the correct Amharic text based on the user's choice
+        const winConditionText = `${game.winCondition} ጠጠር ባነገሰ`;
+
         card.innerHTML = `
             <div class="card-player-info">
                 <div class="player-avatar"><img src="https://i.pravatar.cc/80?u=${game.creator}" alt="Avatar"><span class="star">⭐</span></div>
@@ -68,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="card-game-details">
                 <span class="crowns">${'👑'.repeat(game.winCondition)}</span>
-                <span>${game.winCondition} ጠጠር</span>
+                <span class="win-condition-text">${winConditionText}</span>
             </div>
             <div class="card-actions">
                 <div class="stake-prize-info"><span>Stake: ${game.stake} ብር</span><span class="prize">Prize: ${game.prize} ብር</span></div>
@@ -95,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     /**
-     * [FIXED] This function now correctly renders the empty state UI.
+     * [FINAL] Renders the game list or the correct empty state with the "New Game" button.
      */
     function renderGameList(games) {
         gameListContainer.innerHTML = '';
@@ -107,9 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.41,11.58l-9-9C12.05,2.22,11.55,2,11,2H4C2.9,2,2,2.9,2,4v7c0,0.55,0.22,1.05,0.59,1.42l9,9c0.36,0.36,0.86,0.58,1.41,0.58s1.05-0.22,1.41-0.59l7-7C22.19,13.68,22.19,12.32,21.41,11.58z M12.5,13.5c-0.83,0-1.5-0.67-1.5-1.5s0.67-1.5,1.5-1.5s1.5,0.67,1.5,1.5S13.33,13.5,12.5,13.5z"/></svg>
                         New Game
                     </button>
-                </div>
-            `;
-            // Activate the new button
+                </div>`;
             getEl('empty-state-new-game-btn').addEventListener('click', showStakeModal);
         } else {
             games.forEach(game => addGameCard(game, false));
@@ -144,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hideConfirmModal = () => {
         mainApp.style.filter = 'none';
         confirmModal.classList.add('hidden');
+        // Reset selections for the next game creation
         winConditionOptions.querySelector('.selected')?.classList.remove('selected');
         stakeOptionsGrid.querySelector('.selected')?.classList.remove('selected');
         selectedWinCondition = null;
@@ -152,27 +160,21 @@ document.addEventListener('DOMContentLoaded', () => {
         nextStakeBtn.disabled = true;
     };
 
-    // --- Event Listeners Activation ---
+    // --- Event Listener Activation ---
     function setupEventListeners() {
         if (newGameBtn) newGameBtn.addEventListener('click', showStakeModal);
 
-        /**
-         * [FIXED] This now contains the complete filtering logic.
-         */
         if (filtersContainer) {
             filtersContainer.addEventListener('click', (event) => {
                 const button = event.target.closest('.filter-button');
                 if (!button) return;
-                
                 filtersContainer.querySelector('.active')?.classList.remove('active');
                 button.classList.add('active');
-
+                
                 const filterText = button.textContent.replace('💰 ', '').trim();
                 let filteredGames;
-
-                if (filterText === 'All') {
-                    filteredGames = allGames;
-                } else if (filterText.includes('-')) {
+                if (filterText === 'All') filteredGames = allGames;
+                else if (filterText.includes('-')) {
                     const [min, max] = filterText.split('-').map(Number);
                     filteredGames = allGames.filter(g => g.stake >= min && g.stake <= max);
                 } else {
@@ -183,15 +185,53 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // --- All other button listeners remain the same ---
+        // Stake Modal Listeners
         if (getEl('close-stake-modal-btn')) getEl('close-stake-modal-btn').addEventListener('click', hideStakeModal);
         if (getEl('cancel-stake-btn')) getEl('cancel-stake-btn').addEventListener('click', hideStakeModal);
         if (nextStakeBtn) nextStakeBtn.addEventListener('click', showConfirmModal);
+        
+        // Confirm Modal Listeners
         if (getEl('close-confirm-modal-btn')) getEl('close-confirm-modal-btn').addEventListener('click', hideConfirmModal);
         if (getEl('cancel-confirm-btn')) getEl('cancel-confirm-btn').addEventListener('click', hideConfirmModal);
-        if (stakeOptionsGrid) { /* ... */ }
-        if (winConditionOptions) { /* ... */ }
-        if (createGameBtn) { /* ... */ }
+
+        // Selection Listeners
+        if (stakeOptionsGrid) {
+            stakeOptionsGrid.addEventListener('click', e => {
+                const button = e.target.closest('.option-btn');
+                if (button) {
+                    stakeOptionsGrid.querySelector('.selected')?.classList.remove('selected');
+                    button.classList.add('selected');
+                    selectedStake = parseInt(button.dataset.stake);
+                    nextStakeBtn.disabled = false;
+                }
+            });
+        }
+        
+        if (winConditionOptions) {
+             winConditionOptions.addEventListener('click', e => {
+                const button = e.target.closest('.win-option-btn');
+                if (button) {
+                    winConditionOptions.querySelector('.selected')?.classList.remove('selected');
+                    button.classList.add('selected');
+                    selectedWinCondition = parseInt(button.dataset.win);
+                    createGameBtn.disabled = false;
+                }
+            });
+        }
+
+        // Final Create Game Button
+        if (createGameBtn) {
+            createGameBtn.addEventListener('click', () => {
+                if (selectedStake && selectedWinCondition && socket?.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({
+                        action: "create_game",
+                        stake: selectedStake,
+                        winCondition: selectedWinCondition
+                    }));
+                    hideConfirmModal();
+                }
+            });
+        }
     }
 
     // --- Initial Application Load ---
