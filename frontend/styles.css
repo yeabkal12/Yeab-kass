@@ -1,3 +1,5 @@
+/* frontend/styles.css (The Final, Complete, and Cleaned-Up Version) */
+
 /* --- Global Setup & Color Palette --- */
 :root {
     --background-dark: #10101A;
@@ -49,100 +51,27 @@ body {
 .new-button { background-color: var(--accent-green); padding-right: 15px; }
 .refresh-button { background-color: #333; }
 
-/* --- Filters & Empty State --- */
+/* --- Filters --- */
 .filters { display: flex; gap: 10px; margin-bottom: 20px; }
-.filter-button { border: none; border-radius: 20px; padding: 8px 16px; background-color: var(--card-dark); color: var(--text-secondary); font-size: 0.9em; font-weight: 500; cursor: pointer; }/* frontend/styles.css */
-
-/* --- Add this rule to your existing CSS file --- */
-
-/* This style will be applied by JavaScript when a filter is selected. */
-.filter-button.active {
-    background: linear-gradient(90deg, #4A47A3, #706FD3); /* Blue-to-purple gradient */
-    color: #FFFFFF; /* White text */
-    font-weight: 600;
-}
-
-/* --- All your other styles remain the same --- */
-:root {
-    --primary-dark: #1A1A2E;
-    --card-dark: #1D1D34;
-    /* ...etc */
-}
-/* ... */
+.filter-button { border: none; border-radius: 20px; padding: 8px 16px; background-color: var(--card-dark); color: var(--text-secondary); font-size: 0.9em; font-weight: 500; cursor: pointer; }
 .filter-button.active { background: var(--gradient-button); color: var(--text-primary); }
+
+/* --- Game List & Cards --- */
 #game-list-container { text-align: center; }
-.empty-state-title { font-size: 1.1em; font-weight: 500; color: var(--text-muted); margin: 40px 0 20px 0; }/* frontend/styles.css */
-
-/* --- ADD THESE NEW STYLES --- */
-
-/* Style for the selected "Piece" button in the confirm modal */
-.win-option-btn.selected {
-    background-color: #4A47A3; /* Use your theme's accent color */
-    border-color: #4A47A3;
-    color: #FFFFFF;
-}
-
-/* Style for the game card that will be added to the lobby */
-.game-card {
-    background-color: #1D1D34; /* var(--card-dark) */
-    border-radius: 12px;
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    animation: fadeIn 0.5s ease-out; /* Fade-in animation */
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.game-card .player-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.game-card .player-info .avatar {
-    width: 40px;
-    height: 40px;
-    background-color: #4A47A3;
-    border-radius: 50%;
-    /* Add logic for actual images if needed */
-}
-.game-card .game-details {
-    text-align: center;
-}
-.game-card .game-details .win-text {
-    font-weight: 600;
-}
-.game-card .game-details .win-subtext {
-    font-size: 0.8em;
-    color: #8F8F8F; /* var(--text-muted) */
-}
-
-.game-card .stake-details {
-    text-align: right;
-}
-.game-card .stake-details .prize {
-    color: #27AE60; /* var(--accent-green) */
-    font-weight: 600;
-}
-.game-card .join-btn {
-    border: none;
-    border-radius: 8px;
-    background: linear-gradient(90deg, #4A47A3, #706FD3);
-    color: #FFFFFF;
-    padding: 10px 25px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 8px;
-}
-
-/* --- All your other styles remain the same --- */
+.empty-state-title { font-size: 1.1em; font-weight: 500; color: var(--text-muted); margin: 40px 0 20px 0; }
 .empty-state-btn { border: none; border-radius: 12px; width: 100%; padding: 15px; font-size: 1.1em; font-weight: 600; color: var(--text-primary); background: var(--gradient-button); cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
 .empty-state-btn svg { width: 22px; height: 22px; }
+
+.game-card { background-color: var(--card-dark); border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; animation: fadeIn 0.5s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.game-card .player-info { display: flex; align-items: center; gap: 10px; }
+.game-card .player-info .avatar { width: 40px; height: 40px; background-color: var(--gradient-start); border-radius: 50%; }
+.game-card .game-details { text-align: center; }
+.game-card .game-details .win-text { font-weight: 600; }
+.game-card .game-details .win-subtext { font-size: 0.8em; color: var(--text-muted); }
+.game-card .stake-details { text-align: right; }
+.game-card .stake-details .prize { color: var(--accent-green); font-weight: 600; }
+.game-card .join-btn { border: none; border-radius: 8px; background: var(--gradient-button); color: var(--text-primary); padding: 10px 25px; font-weight: 600; cursor: pointer; margin-top: 8px; }
 
 /* --- Modal Styles --- */
 .modal-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: flex-end; z-index: 500; }
