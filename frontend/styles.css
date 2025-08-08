@@ -1,4 +1,4 @@
-/* frontend/styles.css (The Final, Complete, and Cleaned-Up Version) */
+/* frontend/styles.css (The Final, Complete, and Corrected Version) */
 
 /* --- Global Setup & Color Palette --- */
 :root {
@@ -10,6 +10,7 @@
     --text-muted: #8F8F8F;
     --accent-green: #27AE60;
     --accent-red: #E94560;
+    --accent-gold: #F7B731;
     --gradient-start: #4A47A3;
     --gradient-end: #706FD3;
     --gradient-button: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
@@ -56,22 +57,133 @@ body {
 .filter-button { border: none; border-radius: 20px; padding: 8px 16px; background-color: var(--card-dark); color: var(--text-secondary); font-size: 0.9em; font-weight: 500; cursor: pointer; }
 .filter-button.active { background: var(--gradient-button); color: var(--text-primary); }
 
-/* --- Game List & Cards --- */
+/* --- Game List & Empty State --- */
 #game-list-container { text-align: center; }
-.empty-state-title { font-size: 1.1em; font-weight: 500; color: var(--text-muted); margin: 40px 0 20px 0; }
+.empty-state-container { padding-top: 20px; }
+.empty-state-title { font-size: 1.1em; font-weight: 500; color: var(--text-muted); margin-bottom: 20px; }
 .empty-state-btn { border: none; border-radius: 12px; width: 100%; padding: 15px; font-size: 1.1em; font-weight: 600; color: var(--text-primary); background: var(--gradient-button); cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
 .empty-state-btn svg { width: 22px; height: 22px; }
 
-.game-card { background-color: var(--card-dark); border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; animation: fadeIn 0.5s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.game-card .player-info { display: flex; align-items: center; gap: 10px; }
-.game-card .player-info .avatar { width: 40px; height: 40px; background-color: var(--gradient-start); border-radius: 50%; }
-.game-card .game-details { text-align: center; }
-.game-card .game-details .win-text { font-weight: 600; }
-.game-card .game-details .win-subtext { font-size: 0.8em; color: var(--text-muted); }
-.game-card .stake-details { text-align: right; }
-.game-card .stake-details .prize { color: var(--accent-green); font-weight: 600; }
-.game-card .join-btn { border: none; border-radius: 8px; background: var(--gradient-button); color: var(--text-primary); padding: 10px 25px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+/* ============================================= */
+/* ========= INJECTED SECTION START ============== */
+/* ============================================= */
+
+/* --- Professional Game Card Styles --- */
+.game-card {
+    background-color: var(--card-dark);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+    animation: fadeIn 0.5s ease-out;
+    display: grid;
+    grid-template-columns: 1.2fr 1.1fr 1fr;
+    align-items: center;
+    gap: 10px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Column 1: Player Info */
+.card-col-player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+.player-avatar {
+    position: relative;
+    width: 55px;
+    height: 55px;
+    margin-bottom: 8px;
+}
+.player-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+}
+.player-avatar .star {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 1.5em;
+    text-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+.player-name {
+    font-weight: 600;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+}
+.player-stake {
+    font-size: 0.8em;
+    font-weight: 500;
+    color: var(--accent-gold);
+}
+
+/* Column 2: Win Condition & Join */
+.card-col-game-rules {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.win-condition {
+    text-align: center;
+}
+.crowns {
+    font-size: 1.8em;
+}
+.win-condition span {
+    font-size: 0.8em;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+.join-btn {
+    border: none;
+    border-radius: 20px;
+    background: var(--gradient-button);
+    color: var(--text-primary);
+    padding: 10px 40px;
+    font-weight: 600;
+    font-size: 1em;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.join-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Column 3: Vitals */
+.card-col-vitals {
+    text-align: right;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+.vital-item {
+    margin-bottom: 8px;
+}
+.vital-item:last-child {
+    margin-bottom: 0;
+}
+.vital-item label {
+    color: var(--text-muted);
+    display: block;
+    font-size: 0.9em;
+}
+.vital-item span {
+    color: var(--text-secondary);
+}
+.vital-item .prize {
+    color: var(--accent-green);
+    font-weight: 600;
+}
+
+/* ============================================= */
+/* ========= INJECTED SECTION END ================ */
+/* ============================================= */
+
 
 /* --- Modal Styles --- */
 .modal-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: flex-end; z-index: 500; }
