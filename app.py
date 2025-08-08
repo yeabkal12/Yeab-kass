@@ -33,13 +33,56 @@ WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 bot_app: Application | None = None
 
 
-# --- 3. Lifespan Manager (Sets the Webhook on Startup) ---
+# --- 3. # In your main app.py file
+
+# --- Add these imports at the top of your app.py file ---
+import random
+import asyncio
+
+# ... (all your other imports) ...
+
+# =====================================================================
+# === THIS IS THE CORRECTED LIFESPAN FUNCTION =========================
+# =====================================================================
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Handles critical startup and shutdown events."""
-    logger.info("Application startup...")
+    """
+    Handles startup. It now includes a random delay to prevent a
+    race condition between gunicorn workers when setting the webhook.
+    """
+    logger.info("Application startup... workers are starting...")
     if bot_app and WEBHOOK_URL:
-        # This is where your URL is necessary. It builds the full webhook address.
+        # Introduce a small, random delay for each worker
+        # This prevents all workers from hitting the Telegram API at once.
+        delay = random.uniform(0.5, 3.0)
+        logger.info(f"Worker waiting for {delay:.2f} seconds before setting webhook.")
+        await asyncio.sleep(delay)
+
+        webhook_full_url = f"{WEBHOOK_URL}/api/telegram/webhook"
+        
+        await bot_app.initialize()
+        try:
+            # The first worker to run this will succeed.
+            await bot_app.bot.set_webhook(url=webhook_full_url, allowed_updates=Update.ALL_TYPES)
+            logger.info(f"SUCCESS: Webhook set successfully to -> {webhook_full_url}")
+
+        except Exception as e:
+            # The other workers might fail with a flood control error, which is now OKAY.
+            # We log it as a warning instead of a fatal error.
+            if "Flood control exceeded" in str(e):
+                logger.warning(f"Could not set webhook (another worker likely succeeded): {e}")
+            else:
+                logger.error(f"CRITICAL ERROR: Could not set webhook for a different reason: {e}")
+
+    elif not WEBHOOK_URL:
+         logger.error("FATAL: WEBHOOK_URL environment variable is not set!")
+            
+    yield
+    
+    logger.info("Application shutdown...")
+    if bot_app:
+        await bot_app.shutdown()
         webhook_full_url = f"{WEBHOOK_URL}/api/telegram/webhook"
         
         await bot_app.initialize()
