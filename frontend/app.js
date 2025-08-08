@@ -1,4 +1,4 @@
-// frontend/app.js (The Final, Fully Interactive Version)
+// frontend/app.js (Final Version with Only Game Summary Logic Injected)
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Initialize Telegram & Basic Setup ---
@@ -29,6 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const winConditionOptions = getEl('win-condition-options');
     const createGameBtn = getEl('create-game-btn');
     const cancelConfirmBtn = getEl('cancel-confirm-btn');
+    // --- NEW references for the summary elements ---
+    const summaryStakeAmount = getEl('summary-stake-amount');
+    const summaryPrizeAmount = getEl('summary-prize-amount');
+
 
     // --- Application State ---
     let selectedStake = null;
@@ -101,27 +105,57 @@ document.addEventListener('DOMContentLoaded', () => {
         stakeModal.classList.add('hidden');
     };
     
+    // =========================================================
+    // =========== START: MODIFIED SECTION =====================
+    // =========================================================
+    
+    /**
+     * [NEW] Calculates and displays the prize based on the selected stake.
+     * This function contains the injected logic.
+     */
+    const updateSummary = () => {
+        if (!selectedStake) return;
+
+        const numberOfPlayers = 2;
+        const commissionRate = 0.10;
+
+        // Update stake display
+        summaryStakeAmount.textContent = `Stake: ${selectedStake} ETB`;
+
+        // Calculate prize with 10% commission
+        const totalPot = selectedStake * numberOfPlayers;
+        const finalPrize = totalPot - (totalPot * commissionRate);
+
+        // Display the final prize
+        summaryPrizeAmount.textContent = `${finalPrize.toFixed(2)} ETB`;
+    };
+
+    /**
+     * [MODIFIED] Shows the confirmation modal and now calls updateSummary.
+     */
     const showConfirmModal = () => {
         hideStakeModal();
         mainApp.style.filter = 'blur(5px)';
         confirmModal.classList.remove('hidden');
+        updateSummary(); // <--- This line injects the logic
     };
     
+    // =========================================================
+    // ============= END: MODIFIED SECTION =====================
+    // =========================================================
+
     const hideConfirmModal = () => {
         mainApp.style.filter = 'none';
         confirmModal.classList.add('hidden');
     };
     
-    // =========================================================
-    // === THIS IS THE FIX FOR YOUR UNRESPONSIVE BUTTONS =======
-    // =========================================================
     function setupEventListeners() {
-        // FIX: The "+ NEW" button now opens the stake modal
+        // The "+ NEW" button opens the stake modal
         if (newGameBtn) {
             newGameBtn.addEventListener('click', showStakeModal);
         }
 
-        // FIX: The filter buttons now filter the locally cached game list
+        // The filter buttons filter the game list
         if (filtersContainer) {
             filtersContainer.addEventListener('click', (event) => {
                 const button = event.target.closest('.filter-button');
@@ -149,12 +183,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Listeners for modals
         if (closeStakeModalBtn) closeStakeModalBtn.addEventListener('click', hideStakeModal);
         if (cancelStakeBtn) cancelStakeBtn.addEventListener('click', hideStakeModal);
-        if (nextStakeBtn) nextStakeBtn.addEventListener('click', showConfirmModal);
+        if (nextStakeBtn) nextStakeBtn.addEventListener('click', showConfirmModal); // This triggers the logic
         
         if (closeConfirmModalBtn) closeConfirmModalBtn.addEventListener('click', hideConfirmModal);
         if (cancelConfirmBtn) cancelConfirmBtn.addEventListener('click', hideConfirmModal);
         
-        // ... (all other listeners for stake selection, game creation, etc.)
         if (stakeOptionsGrid) {
             stakeOptionsGrid.addEventListener('click', e => {
                 const button = e.target.closest('.option-btn');
@@ -190,9 +223,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const init = () => {
         loadingScreen.classList.add('hidden');
         mainApp.classList.remove('hidden');
-        setupEventListeners(); // Call the function that attaches all our click listeners
-        connectWebSocket(); // Start the real-time connection
+        setupEventListeners();
+        connectWebSocket();
     };
     
-    setTimeout(init, 3000); // Using a 3-second load time for testing
+    setTimeout(init, 3000);
 });
