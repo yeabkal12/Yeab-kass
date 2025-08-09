@@ -1,4 +1,4 @@
-/* frontend/styles.css (The Final, Complete, and Corrected Version) */
+/* frontend/styles.css (Final Version with Dice Icon Styles Injected) */
 
 /* --- Global Setup & Color Palette --- */
 :root {
@@ -98,11 +98,16 @@ body {
     width: 55px;
     height: 55px;
     margin-bottom: 8px;
-}
-.player-avatar img {
-    width: 100%;
-    height: 100%;
+    /* [INJECTED FIX] Styles for the new dice icon container */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--primary-dark);
     border-radius: 12px;
+}
+.dice-icon {
+    /* [INJECTED FIX] Style for the dice emoji itself */
+    font-size: 2.5em;
 }
 .player-avatar .star {
     position: absolute;
