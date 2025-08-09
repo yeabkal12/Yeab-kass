@@ -1,167 +1,220 @@
+/* frontend/styles.css (Final Version with Compact Card Layout Injected) */
+
+/* --- Global Setup & Color Palette --- */
 :root {
-    --dark-bg: #1e1e2f; /* Dark charcoal gray */
-    --card-bg: #2d2d44; /* Slightly lighter gray */
-    --text-color: #ffffff;
-    --text-muted: #a0a0b0;
-    --magenta: #e91e63;
-    --gold: #ffc107;
-    --electric-purple: #8A2BE2;
-    --royal-blue: #4169E1;
+    --background-dark: #10101A;
+    --primary-dark: #1A1A2E;
+    --card-dark: #1D1D34;
+    --text-primary: #FFFFFF;
+    --text-secondary: #EAEAEA;
+    --text-muted: #8F8F8F;
+    --accent-green: #27AE60;
+    --accent-red: #E94560;
+    --accent-gold: #F7B731;
+    --gradient-start: #4A47A3;
+    --gradient-end: #706FD3;
+    --gradient-button: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
 }
 
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-    background-color: var(--dark-bg);
-    color: var(--text-color);
-    font-family: 'Inter', sans-serif, system-ui;
-    margin: 0;
-    padding: 15px;
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--primary-dark);
+    color: var(--text-primary);
+    overscroll-behavior: none;
     -webkit-font-smoothing: antialiased;
 }
 
-.app-container {
-    max-width: 600px;
-    margin: 0 auto;
-}
-/* --- NEW LOADING SCREEN STYLES --- */
-.hidden {
-    display: none !important;
-}
+/* --- Utility Class --- */
+.hidden { display: none !important; }
 
-.loading-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh; /* Full screen height */
-    text-align: center;
-}
+/* --- Loading Screen --- */
+#loading-screen { position: fixed; inset: 0; background-color: #000; display: flex; justify-content: center; align-items: center; z-index: 1000; }
+.loading-content { text-align: center; }
+.loading-logo { width: 80px; height: 80px; }
+.brand-name { font-size: 1.5em; font-weight: 600; margin-top: 10px; }
+.progress-bar-container { width: 150px; height: 5px; background-color: #333; border-radius: 2.5px; margin: 20px auto 0; overflow: hidden; }
+.progress-bar-motion { width: 100%; height: 100%; background: var(--text-primary); animation: loading-motion 8s linear forwards; }
+@keyframes loading-motion { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+.status-text { margin-top: 15px; font-size: 1em; color: var(--text-muted); }
 
-.loading-logo {
-    margin-bottom: 15px;
-}
+/* --- Main App UI --- */
+#main-app { padding: 15px; }
+.app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.user-info { display: flex; align-items: center; gap: 10px; }
+.user-avatar { width: 36px; height: 36px; border-radius: 50%; background-color: var(--gradient-start); display: flex; justify-content: center; align-items: center; }
+.user-avatar svg { width: 24px; height: 24px; color: var(--text-primary); }
+.user-balance { background-color: var(--card-dark); padding: 8px 12px; border-radius: 18px; font-weight: 600; font-size: 0.9em; }
+.header-actions { display: flex; gap: 10px; }
+.action-button { border: none; border-radius: 8px; padding: 10px; display: flex; align-items: center; gap: 5px; font-weight: 600; color: var(--text-primary); cursor: pointer; }
+.action-button svg { width: 20px; height: 20px; }
+.new-button { background-color: var(--accent-green); padding-right: 15px; }
+.refresh-button { background-color: #333; }
 
-.loading-text {
-    font-size: 22px; /* Slightly larger text */
-    font-weight: 600; /* Bolder */
-    color: var(--text-color);
-}
+/* --- Filters --- */
+.filters { display: flex; gap: 10px; margin-bottom: 20px; }
+.filter-button { border: none; border-radius: 20px; padding: 8px 16px; background-color: var(--card-dark); color: var(--text-secondary); font-size: 0.9em; font-weight: 500; cursor: pointer; }
+.filter-button.active { background: var(--gradient-button); color: var(--text-primary); }
 
-.loading-status {
-    color: var(--text-muted);
-    font-size: 16px;
-    margin-top: 8px;
-}
+/* --- Game List & Empty State --- */
+#game-list-container { text-align: center; }
+.empty-state-container { padding-top: 20px; }
+.empty-state-title { font-size: 1.1em; font-weight: 500; color: var(--text-muted); margin-bottom: 20px; }
+.empty-state-btn { border: none; border-radius: 12px; width: 100%; padding: 15px; font-size: 1.1em; font-weight: 600; color: var(--text-primary); background: var(--gradient-button); cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
+.empty-state-btn svg { width: 22px; height: 22px; }
 
-/* Header */
-.main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.header-left { display: flex; align-items: center; gap: 10px; }
-.profile-icon { font-size: 24px; }
-.balance { display: flex; align-items: center; background-color: var(--card-bg); padding: 8px 12px; border-radius: 8px; font-weight: bold; }
-.header-actions { display: flex; align-items: center; gap: 10px; }
-#new-game-btn { background-color: var(--magenta); color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; }
-#refresh-btn { background-color: var(--card-bg); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+/* ============================================= */
+/* ========= INJECTED SECTION START ============== */
+/* ============================================= */
 
-/* New Filters with Gradient */
-.filters { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
-.filters::-webkit-scrollbar { display: none; }
-.filter-btn { display: flex; align-items: center; gap: 5px; background-color: rgba(45, 45, 68, 0.5); color: var(--text-color); border: none; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.2s ease-in-out; }
-.filter-btn.active { background-image: linear-gradient(90deg, var(--electric-purple), var(--royal-blue)); color: white; font-weight: bold; box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4); }
-.filter-btn .coin-icon { font-size: 12px; }
-
-/* Game Card */
-.game-list { margin-top: 20px; }
-.game-card { background-color: var(--card-bg); border-radius: 16px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-.card-left, .card-center, .card-right { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.card-left, .card-right { flex: 1; }
-.card-center { flex: 1.5; }
-.avatar-container { position: relative; margin-bottom: 8px; }
-.avatar-container img { width: 60px; height: 60px; border-radius: 12px; }
-.star-badge { position: absolute; top: -5px; right: -5px; font-size: 18px; }
-.username { font-weight: bold; font-size: 14px; }
-.user-stake { color: var(--text-muted); font-size: 12px; }
-.game-info .crown-icon { font-size: 32px; color: var(--gold); }
-.amharic-text { margin: 8px 0; font-size: 14px; }
-.join-btn { background-color: var(--magenta); color: white; border: none; padding: 10px 30px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
-.game-stat { margin-bottom: 10px; }
-.game-stat span { color: var(--text-muted); font-size: 12px; }
-.game-stat strong { font-size: 16px; display: block; }
-.game-stat .prize-amount { color: var(--gold); font-weight: bold; }/* --- ADD THESE NEW STYLES TO THE END OF YOUR CSS FILE --- */
-
-/* Styles for the 'Create Game' screen view */
-#create-game-view {
-    padding: 15px;
-}
-#create-game-view h2 {
-    text-align: center;
-    margin-bottom: 25px;
-}
-
-.setting {
-    margin-bottom: 25px;
-}
-.setting label {
-    display: block;
+/* --- Sleek, Compact Game Card Styles --- */
+.game-card {
+    background-color: var(--card-dark);
+    border-radius: 12px;
+    padding: 10px 15px;
     margin-bottom: 10px;
-    font-weight: bold;
-    color: var(--text-muted);
-}
-
-/* This is the new grid style for the stake buttons */
-#stake-options {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4 columns */
-    gap: 10px; /* Space between buttons */
-}
-
-/* General style for all selectable buttons */
-.option-btn {
-    background-color: var(--card-bg);
-    color: var(--text-color);
-    border: 2px solid transparent;
-    padding: 12px 5px; /* Adjusted padding for smaller buttons */
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-.option-btn.active {
-    border-color: var(--magenta); /* Use a consistent highlight color */
-}
-
-#custom-stake-input {
-    width: 100%;
-    box-sizing: border-box;
-    margin-top: 15px;
-    padding: 12px;
-    background-color: var(--card-bg);
-    border: 1px solid transparent;
-    border-radius: 8px;
-    color: var(--text-color);
-    font-size: 16px;
-    text-align: center;
-}
-
-.form-actions {
+    animation: fadeIn 0.5s ease-out;
     display: flex;
     justify-content: space-between;
-    margin-top: 30px;
+    align-items: center;
+    gap: 15px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Player Info (Left Side) */
+.card-player-info {
+    display: flex;
+    align-items: center;
     gap: 10px;
 }
-.form-actions button {
-    flex: 1; /* Make buttons take equal space */
-    padding: 12px;
+.player-avatar {
+    position: relative;
+    width: 45px;
+    height: 45px;
+    flex-shrink: 0;
+    display: flex; /* For centering the dice icon */
+    justify-content: center;
+    align-items: center;
+    background-color: var(--primary-dark);
+    border-radius: 50%; /* Make it circular */
+}
+.dice-icon {
+    font-size: 1.8em; /* Adjusted dice size */
+}
+.player-avatar .star {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 1.2em;
+}
+.player-details {
+    display: flex;
+    flex-direction: column;
+}
+.player-name {
+    font-weight: 600;
+    font-size: 0.9em;
+}
+.player-stake {
+    font-size: 0.8em;
+    font-weight: 500;
+    color: var(--accent-gold);
+}
+
+/* Game Rules & Join (Center) */
+.card-game-rules {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.win-condition {
+    text-align: center;
+}
+.crowns {
+    font-size: 1.6em;
+}
+.win-condition span {
+    font-size: 0.75em;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+.join-btn {
     border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
+    border-radius: 10px;
+    background: var(--gradient-button);
+    color: var(--text-primary);
+    padding: 10px 25px;
+    font-weight: 600;
+    font-size: 0.9em;
     cursor: pointer;
+    transition: transform 0.2s ease;
 }
-#cancel-create-btn {
-    background-color: var(--text-muted);
-    color: var(--dark-bg);
+.join-btn:hover {
+    transform: scale(1.05);
 }
-#show-confirm-btn {
-    background-color: var(--success-color);
-    color: white;
+
+/* Vitals (Right Side) */
+.card-vitals {
+    text-align: right;
+    font-size: 0.85em;
+    font-weight: 500;
 }
+.vital-item {
+    margin-bottom: 5px;
+}
+.vital-item:last-child {
+    margin-bottom: 0;
+}
+.vital-item label {
+    display: none; /* Hide labels for compact view */
+}
+.vital-item span {
+    color: var(--text-secondary);
+}
+.vital-item .prize {
+    color: var(--accent-green);
+    font-weight: 600;
+}
+
+/* ============================================= */
+/* ========= INJECTED SECTION END ================ */
+/* ============================================= */
+
+
+/* --- Modal Styles --- */
+.modal-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: flex-end; z-index: 500; }
+.modal-content { background-color: var(--primary-dark); width: 100%; padding: 15px; border-radius: 20px 20px 0 0; position: relative; animation: slide-up 0.3s ease-out; }
+@keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle { width: 40px; height: 4px; background-color: #444; border-radius: 2px; margin: 0 auto 15px; }
+.close-modal-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--accent-red); font-size: 1.5em; font-weight: bold; cursor: pointer; }
+.modal-content h2 { text-align: left; margin-bottom: 20px; font-weight: 600; }
+.options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
+.option-btn { border: 1px solid var(--card-dark); background-color: var(--card-dark); border-radius: 10px; padding: 15px 5px; color: var(--text-secondary); font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s ease; }
+.option-btn.selected { border-color: var(--gradient-start); background-color: var(--gradient-start); color: var(--text-primary); transform: scale(1.05); }
+.option-btn small { font-weight: 400; color: var(--text-muted); }
+.modal-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px; }
+.modal-action-btn { border: none; border-radius: 12px; padding: 15px; font-size: 1.1em; font-weight: 600; cursor: pointer; }
+.cancel { background-color: var(--accent-red); color: var(--text-primary); }
+.next { background: var(--gradient-button); color: var(--text-primary); }
+.next:disabled { background: #333; color: var(--text-muted); cursor: not-allowed; }
+
+/* --- Confirmation Modal Specifics --- */
+.summary-container { background-color: var(--card-dark); border-radius: 12px; padding: 15px; margin-bottom: 25px; }
+.summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 500; }
+#summary-stake-amount { color: var(--accent-green); font-weight: 600; }
+.summary-details { display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px; margin-bottom: 15px; }
+.summary-box { background-color: var(--primary-dark); border-radius: 10px; padding: 10px; text-align: center; }
+.summary-box label { font-size: 0.9em; color: var(--text-muted); display: block; margin-bottom: 5px; }
+.summary-icon { font-size: 1.2em; display: block; margin-bottom: 5px; }
+.win-condition-selector { display: flex; justify-content: center; gap: 5px; }
+.win-option-btn { flex-grow: 1; border: 1px solid #444; background-color: transparent; color: var(--text-secondary); padding: 8px 5px; border-radius: 6px; cursor: pointer; }
+.win-option-btn.selected { background-color: var(--gradient-start); border-color: var(--gradient-start); color: var(--text-primary); }
+.summary-prize { background-color: var(--primary-dark); border-radius: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+.prize-info { display: flex; align-items: center; gap: 10px; }
+.prize-info small { font-size: 0.8em; color: var(--text-muted); }
+#summary-prize-amount { font-size: 1.4em; font-weight: 700; color: var(--accent-green); }
