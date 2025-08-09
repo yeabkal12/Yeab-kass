@@ -1,4 +1,4 @@
-// frontend/app.js (Final Version with the Professional Game Card UI)
+// frontend/app.js (Final Version with Robot Avatars Injected)
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Initialize Telegram & Basic Setup ---
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========== START: MODIFIED SECTION =====================
     // =========================================================
     /**
-     * [INJECTED FIX] Creates a game card with the correct professional layout and text.
+     * [INJECTED FIX] Creates a game card using the new robot avatars.
      */
     const createGameCardElement = (game) => {
         const card = document.createElement('div');
@@ -76,12 +76,15 @@ document.addEventListener('DOMContentLoaded', () => {
         card.id = `game-${game.id}`;
 
         const maskedUsername = game.creator ? `@${game.creator.substring(0, 3)}***${game.creator.slice(-1)}` : '@Player***';
+        
+        // THIS IS THE INJECTED CHANGE: The path now points to your robots folder.
+        const avatarUrl = `assets/robots/robot_avatar_${game.avatarId}.png`;
 
         card.innerHTML = `
             <!-- Column 1: Player Info -->
             <div class="card-col-player">
                 <div class="player-avatar">
-                    <img src="https://i.pravatar.cc/80?u=${game.creator}" alt="Avatar">
+                    <img src="${avatarUrl}" alt="Robot Avatar">
                     <span class="star">⭐</span>
                 </div>
                 <span class="player-name">${maskedUsername}</span>
@@ -143,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="empty-state-container">
                     <h3 class="empty-state-title">Create New Game</h3>
                     <button id="empty-state-new-game-btn" class="empty-state-btn">
-                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.41,11.58l-9-9C12.05,2.22,11.55,2,11,2H4C2.9,2,2,2.9,2,4v7c0,0.55,0.22,1.05,0.59,1.42l9,9c0.36,0.36,0.86,0.58,1.41,0.58s1.05-0.22,1.41-0.59l7-7C22.19,13.68,22.19,12.32,21.41,11.58z M12.5,13.5c-0.83,0-1.5-0.67-1.5-1.5s0.67-1.5,1.5-1.5s1.5,0.67,1.5,1.5S13.33,13.5,12.5,13.5z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.41,11.58l-9-9C12.05,2.22,11.55,2,11,2H4C2.9,2,2,2.9,2,4v7c0,0.55,0.22,1.05,0.59,1.42l9,9c0.36,0.36,0.86,0.58,1.41,0.58s1.05-0.22,1.41-0.59l7-7C22.19,13.68,22.19,12.32,22.19,11.58z M12.5,13.5c-0.83,0-1.5-0.67-1.5-1.5s0.67-1.5,1.5-1.5s1.5,0.67,1.5,1.5S13.33,13.5,12.5,13.5z"/></svg>
                         New Game
                     </button>
                 </div>`;
