@@ -1,4 +1,4 @@
-// frontend/app.js (Final Version with Robot Avatars Injected)
+// frontend/app.js (Final Version with Dice Icon Injected)
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Initialize Telegram & Basic Setup ---
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========== START: MODIFIED SECTION =====================
     // =========================================================
     /**
-     * [INJECTED FIX] Creates a game card using the new robot avatars.
+     * [INJECTED FIX] Creates a game card using a dice icon instead of a picture.
      */
     const createGameCardElement = (game) => {
         const card = document.createElement('div');
@@ -76,16 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
         card.id = `game-${game.id}`;
 
         const maskedUsername = game.creator ? `@${game.creator.substring(0, 3)}***${game.creator.slice(-1)}` : '@Player***';
-        
-        // THIS IS THE INJECTED CHANGE: The path now points to your robots folder.
-        const avatarUrl = `assets/robots/robot_avatar_${game.avatarId}.png`;
 
         card.innerHTML = `
             <!-- Column 1: Player Info -->
             <div class="card-col-player">
-                <div class="player-avatar">
-                    <img src="${avatarUrl}" alt="Robot Avatar">
-                    <span class="star">⭐</span>
+                <!-- THIS IS THE INJECTED CHANGE: Replaced <img> with a <div> -->
+                <div class="player-avatar dice-icon">
+                    🎲
                 </div>
                 <span class="player-name">${maskedUsername}</span>
                 <span class="player-stake">${game.stake} ብር</span>
