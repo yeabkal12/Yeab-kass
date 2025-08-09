@@ -6,18 +6,14 @@
     <title>Yeab game zone</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <!-- ============================================= -->
-    <!-- ========= 1. LOADING SCREEN VIEW ============ -->
-    <!-- ============================================= -->
-    <!-- START: INJECTED SECTION -->
+    <!-- Loading Screen -->
     <div id="loading-screen">
         <div class="loading-content">
-            <!-- Your new hexagonal logo SVG -->
             <svg class="loading-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M50 5L15.45 27.5V72.5L50 95L84.55 72.5V27.5L50 5Z" stroke="white" stroke-width="3"/>
                 <path d="M50 5L50 95" stroke="white" stroke-width="1.5"/>
@@ -33,11 +29,8 @@
             <p class="status-text">Loading...</p>
         </div>
     </div>
-    <!-- END: INJECTED SECTION -->
 
-    <!-- ============================================= -->
-    <!-- =========== 2. MAIN APP VIEW ================ -->
-    <!-- ============================================= -->
+    <!-- Main App View -->
     <div id="main-app" class="hidden">
         <header class="app-header">
             <div class="user-info">
@@ -72,9 +65,7 @@
         </div>
     </div>
 
-    <!-- ============================================= -->
-    <!-- ======== 3. STAKE SELECTION MODAL =========== -->
-    <!-- ============================================= -->
+    <!-- Stake Selection Modal -->
     <div id="stake-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-handle"></div>
@@ -98,9 +89,7 @@
         </div>
     </div>
     
-    <!-- ============================================= -->
-    <!-- ======== 4. CONFIRMATION MODAL ============== -->
-    <!-- ============================================= -->
+    <!-- Confirmation Modal -->
     <div id="confirm-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-handle"></div>
@@ -144,7 +133,6 @@
             </div>
         </div>
     </div>
-
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="app.js"></script>
