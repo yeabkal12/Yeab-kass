@@ -1,4 +1,4 @@
-// frontend/app.js (Final Version with Dice Icon Injected)
+// frontend/app.js (Final Version with Compact Card Layout Injected)
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Initialize Telegram & Basic Setup ---
@@ -65,10 +65,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- UI Rendering ---
 
     // =========================================================
-    // =========== START: MODIFIED SECTION =====================
+    // =========== START: INJECTED SECTION =====================
     // =========================================================
     /**
-     * [INJECTED FIX] Creates a game card using a dice icon instead of a picture.
+     * [INJECTED FIX] Creates a game card with the new sleek, horizontal layout.
      */
     const createGameCardElement = (game) => {
         const card = document.createElement('div');
@@ -76,29 +76,30 @@ document.addEventListener('DOMContentLoaded', () => {
         card.id = `game-${game.id}`;
 
         const maskedUsername = game.creator ? `@${game.creator.substring(0, 3)}***${game.creator.slice(-1)}` : '@Player***';
+        const avatarUrl = `assets/avatars/default_avatar.png`; // Using your permanent avatar
 
+        // This is the new, more streamlined HTML structure
         card.innerHTML = `
-            <!-- Column 1: Player Info -->
-            <div class="card-col-player">
-                <!-- THIS IS THE INJECTED CHANGE: Replaced <img> with a <div> -->
-                <div class="player-avatar dice-icon">
-                    🎲
+            <div class="card-player-info">
+                <div class="player-avatar">
+                    <img src="${avatarUrl}" alt="Avatar">
+                    <span class="star">⭐</span>
                 </div>
-                <span class="player-name">${maskedUsername}</span>
-                <span class="player-stake">${game.stake} ብር</span>
+                <div class="player-details">
+                    <span class="player-name">${maskedUsername}</span>
+                    <span class="player-stake">${game.stake} ብር</span>
+                </div>
             </div>
 
-            <!-- Column 2: Win Condition & Join Button -->
-            <div class="card-col-game-rules">
+            <div class="card-game-rules">
                 <div class="win-condition">
                     <div class="crowns">${'👑'.repeat(game.winCondition)}</div>
-                    <span>${game.winCondition} ጠጠር</span>
+                    <span>${game.winCondition} ጠጠር ባነገሰ</span>
                 </div>
                 <button class="join-btn" data-game-id="${game.id}">Join</button>
             </div>
 
-            <!-- Column 3: Game Vitals -->
-            <div class="card-col-vitals">
+            <div class="card-vitals">
                 <div class="vital-item">
                     <label>Stake</label>
                     <span>${game.stake} ብር</span>
@@ -119,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return card;
     };
     // =========================================================
-    // ============= END: MODIFIED SECTION =====================
+    // ============= END: INJECTED SECTION =====================
     // =========================================================
 
     const addGameCard = (game, atTop = false) => {
@@ -270,4 +271,4 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     setTimeout(init, 1000);
-});
+});```
