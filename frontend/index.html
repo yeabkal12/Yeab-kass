@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Next Ludo Games</title>
+    <title>Yeab game zone</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,8 +14,10 @@
     <!-- ============================================= -->
     <!-- ========= 1. LOADING SCREEN VIEW ============ -->
     <!-- ============================================= -->
+    <!-- START: INJECTED SECTION -->
     <div id="loading-screen">
         <div class="loading-content">
+            <!-- Your new hexagonal logo SVG -->
             <svg class="loading-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M50 5L15.45 27.5V72.5L50 95L84.55 72.5V27.5L50 5Z" stroke="white" stroke-width="3"/>
                 <path d="M50 5L50 95" stroke="white" stroke-width="1.5"/>
@@ -31,6 +33,7 @@
             <p class="status-text">Loading...</p>
         </div>
     </div>
+    <!-- END: INJECTED SECTION -->
 
     <!-- ============================================= -->
     <!-- =========== 2. MAIN APP VIEW ================ -->
@@ -61,11 +64,11 @@
             <button class="filter-button active">All</button>
             <button class="filter-button">💰 20-100</button>
             <button class="filter-button">💰 200-700</button>
-            <button class="filter-button">💰 1000</button>
+            <button class="filter-button">💰 1000+</button>
         </div>
 
         <div id="game-list-container">
-            <!-- Game cards or empty state injected here -->
+            <!-- Game cards or the empty state will be injected here by app.js -->
         </div>
     </div>
 
