@@ -1,4 +1,5 @@
-// frontend/app.js (The Definitive Fix for All Issues)
+// frontend/app.js (The Definitive Version)
+
 document.addEventListener('DOMContentLoaded', () => {
     const tg = window.Telegram.WebApp;
     tg.ready();
@@ -45,6 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
             }
         };
+        // Add error and close handlers for robustness
+        socket.onerror = (error) => console.error("WebSocket Error:", error);
+        socket.onclose = () => console.log("WebSocket connection closed.");
     }
 
     const createGameCardElement = (game) => {
@@ -52,12 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
         card.className = 'game-card';
         card.id = `game-${game.id}`;
         const maskedUsername = game.creator ? `@${game.creator.substring(0, 3)}***${game.creator.slice(-1)}` : '@Player***';
-        const avatarUrl = 'assets/avatars/default_avatar.png';
-
+        
         card.innerHTML = `
             <div class="card-player-info">
-                <div class="player-avatar">
-                    <img src="${avatarUrl}" alt="Avatar">
+                <div class="player-avatar pilot-icon">
+                    🧑‍✈️
                     <span class="star">⭐</span>
                 </div>
                 <div class="player-details">
@@ -84,7 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>`;
         
         card.querySelector('.join-btn').addEventListener('click', () => {
-            socket.send(JSON.stringify({ action: "join_game", gameId: game.id }));
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ action: "join_game", gameId: game.id }));
+            }
         });
         return card;
     };
