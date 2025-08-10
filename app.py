@@ -1,4 +1,4 @@
-# app.py (The Final, Definitive Version with Correct bot_data Initialization)
+# app.py (The Final, Definitive, and Unified Version)
 
 import logging, os, asyncio, json, uuid, random
 from typing import Dict, List
@@ -35,7 +35,7 @@ class ConnectionManager:
         for connection in self.active_connections: await connection.send_text(message)
 manager = ConnectionManager()
 
-# --- 3. BOT HANDLERS ---
+# --- 3. BOT HANDLERS (Now live inside app.py) ---
 def get_main_keyboard() -> ReplyKeyboardMarkup:
     main_keyboard = [[KeyboardButton("Play Ludo Games 🎮", web_app=WebAppInfo(url=STATIC_SITE_URL))],[KeyboardButton("My Wallet 💰"), KeyboardButton("Deposit 💵")],[KeyboardButton("Withdraw 📤"), KeyboardButton("Support 📞")]]
     return ReplyKeyboardMarkup(main_keyboard, resize_keyboard=True)
@@ -53,10 +53,7 @@ async def get_game_details_as_dict(game_id: int) -> Dict:
 async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data_str = update.effective_message.web_app_data.data
     user = update.effective_user
-    logger.info(f"Received Web App data from user {user.id}: {data_str}")
-    
     manager = context.bot_data["connection_manager"]
-
     if data_str.startswith("create_game_"):
         try:
             parts = data_str.split('_'); stake = int(parts[3]); win_condition = int(parts[5])
@@ -66,19 +63,15 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 game_stmt = insert(games).values(creator_id=user.id, stake=stake, pot=stake * 2, win_condition=win_condition, status='lobby').returning(games.c.id)
                 game_id = (await session.execute(game_stmt)).scalar_one()
                 await session.commit()
-
             if game_id:
                 new_game_details = await get_game_details_as_dict(game_id)
-                if new_game_details:
-                    await manager.broadcast(json.dumps({"event": "new_game", "game": new_game_details}))
+                if new_game_details: await manager.broadcast(json.dumps({"event": "new_game", "game": new_game_details}))
             await context.bot.send_message(user.id, "Your game is now live in the lobby!")
-        except Exception as e:
-            logger.error(f"Failed to create game for user {user.id}: {e}", exc_info=True)
+        except Exception as e: logger.error(f"Failed to create game for user {user.id}: {e}", exc_info=True)
 
-# --- 4. LIFESPAN MANAGER ---
+# --- 4. LIFESPAN MANAGER (HANDLES BOT STARTUP) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # This function is correct
     logger.info("Application startup...")
     if bot_app and WEBHOOK_URL:
         await bot_app.initialize()
@@ -99,32 +92,19 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, 
 
 if not TELEGRAM_BOT_TOKEN: logger.error("FATAL: TELEGRAM_BOT_TOKEN is not set!")
 else:
-    # =========================================================
-    # =========== THIS IS THE CRITICAL FIX ====================
-    # =========================================================
-    # 1. Create the application instance FIRST.
-    ptb_application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
-    
-    # 2. Now, set the bot_data on the CREATED application object.
-    ptb_application.bot_data["connection_manager"] = manager
-    
-    # 3. Attach the handlers as before.
+    ptb_application_builder = Application.builder().token(TELEGRAM_BOT_TOKEN)
+    ptb_application_builder.bot_data["connection_manager"] = manager
+    ptb_application = ptb_application_builder.build()
     ptb_application.add_handler(CommandHandler("start", start_command))
     ptb_application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data))
-    
-    # 4. Assign the fully configured application to our global variable.
     bot_app = ptb_application
-    logger.info("Telegram bot application created and handlers attached successfully.")
-    # =========================================================
-    # =========================================================
+    logger.info("Telegram bot application created and handlers attached directly.")
 
 # --- 6. API ENDPOINTS ---
 @app.post("/api/telegram/webhook")
 async def telegram_webhook(request: Request):
     if not bot_app: return Response(status_code=503)
-    try:
-        data = await request.json(); update = Update.de_json(data, bot_app.bot); await bot_app.process_update(update)
-        return Response(status_code=200)
+    try: data = await request.json(); update = Update.de_json(data, bot_app.bot); await bot_app.process_update(update); return Response(status_code=200)
     except Exception as e: logger.error(f"Error processing Telegram update: {e}", exc_info=True); return Response(status_code=500)
 
 @app.websocket("/ws/{user_id}")
