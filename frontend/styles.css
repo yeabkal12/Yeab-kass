@@ -1,231 +1,151 @@
-// frontend/app.js (Final Version with Only Game Summary Logic Injected)
+/* styles.css - Final Design Based on Examples */
 
-document.addEventListener('DOMContentLoaded', () => {
-    // --- Initialize Telegram & Basic Setup ---
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-    
-    const getEl = id => document.getElementById(id);
+/* --- Global Setup & Color Palette --- */
+:root {
+    --bg-dark: #10101A;
+    --primary-dark: #1A1A2E;
+    --card-dark: #1D1D34;
+    --text-primary: #FFFFFF;
+    --text-secondary: #EAEAEA;
+    --text-muted: #8F8F8F;
+    --accent-green: #27AE60;
+    --accent-red: #E53935;
+    --gradient-start: #4A47A3;
+    --gradient-end: #7C4DFF; /* A more vibrant purple */
+    --gradient-button: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+}
 
-    // --- DOM Element References (CRITICAL - ALL must be correct) ---
-    const loadingScreen = getEl('loading-screen');
-    const mainApp = getEl('main-app');
-    const gameListContainer = getEl('game-list-container');
-    const newGameBtn = getEl('new-game-btn'); // The "+ NEW" button
-    const filtersContainer = document.querySelector('.filters'); // The container for filter buttons
-    const refreshBtn = getEl('refresh-btn');
-    
-    // Stake Modal Elements
-    const stakeModal = getEl('stake-modal');
-    const closeStakeModalBtn = getEl('close-stake-modal-btn');
-    const stakeOptionsGrid = getEl('stake-options-grid');
-    const cancelStakeBtn = getEl('cancel-stake-btn');
-    const nextStakeBtn = getEl('next-stake-btn');
-    
-    // Confirm Modal Elements
-    const confirmModal = getEl('confirm-modal');
-    const closeConfirmModalBtn = getEl('close-confirm-modal-btn');
-    const winConditionOptions = getEl('win-condition-options');
-    const createGameBtn = getEl('create-game-btn');
-    const cancelConfirmBtn = getEl('cancel-confirm-btn');
-    // --- NEW references for the summary elements ---
-    const summaryStakeAmount = getEl('summary-stake-amount');
-    const summaryPrizeAmount = getEl('summary-prize-amount');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--primary-dark);
+    color: var(--text-primary);
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* --- Utility Class --- */
+.hidden { display: none !important; }
+
+/* --- Loading Screen --- */
+#loading-screen {
+    position: fixed; inset: 0;
+    background-color: #000;
+    display: flex; justify-content: center; align-items: center;
+    z-index: 2000;
+}
+.loading-content { text-align: center; }
+.loading-logo { width: 80px; height: 80px; }
+.brand-name { font-size: 1.5em; font-weight: 600; margin-top: 10px; }
+.progress-bar-container { width: 150px; height: 5px; background-color: #333; border-radius: 2.5px; margin: 20px auto 0; overflow: hidden; }
+.progress-bar-motion { width: 100%; height: 100%; background: var(--text-primary); animation: loading-motion 2s linear forwards; }
+@keyframes loading-motion {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+.status-text { margin-top: 15px; font-size: 1em; color: var(--text-muted); }
+
+/* --- Main App UI --- */
+#main-app { padding: 15px; transition: filter 0.3s ease-in-out; }
+.app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.user-info { display: flex; align-items: center; gap: 10px; }
+.user-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--card-dark); display: flex; justify-content: center; align-items: center; }
+.user-avatar svg { width: 24px; height: 24px; color: var(--text-primary); }
+.user-balance { background-color: var(--card-dark); padding: 8px 12px; border-radius: 18px; font-weight: 600; font-size: 0.9em; }
+.header-actions { display: flex; gap: 10px; }
+.action-button { border: none; border-radius: 8px; padding: 10px; display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--text-primary); cursor: pointer; }
+.new-button { background-color: var(--accent-green); padding-left: 15px; padding-right: 15px; }
+.refresh-button { background-color: var(--card-dark); width: 36px; }
+.refresh-button svg { width: 20px; height: 20px; }
+
+/* --- Filters --- */
+.filters { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; }
+.filter-button { border: none; border-radius: 20px; padding: 8px 16px; background-color: var(--card-dark); color: var(--text-secondary); font-size: 0.9em; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.filter-button.active { background: var(--gradient-button); color: var(--text-primary); }
+
+/* --- Game List & Cards --- */
+#game-list-container { text-align: center; }
+.empty-state-title { font-size: 1.1em; font-weight: 500; color: var(--text-muted); margin: 40px 0 20px 0; }
+
+.game-card {
+    background-color: var(--card-dark);
+    border-radius: 12px;
+    padding: 15px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 12px;
+    text-align: left;
+}
+.game-card-player .avatar { width: 40px; height: 40px; border-radius: 50%; background-color: var(--gradient-start); }
+.game-card-player .username { font-weight: 600; }
+.game-card-player .stake { font-size: 0.9em; color: var(--text-muted); }
+.game-card-details { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.game-card-details .icon { font-size: 1.5em; }
+.game-card-details .text { font-size: 0.8em; color: var(--text-muted); }
+.game-card-actions { display: flex; flex-direction: column; align-items: flex-end; }
+.game-card-actions .prize-label { font-size: 0.8em; color: var(--text-muted); }
+.game-card-actions .prize { font-size: 1.1em; color: var(--accent-green); font-weight: 600; margin-bottom: 8px; }
+.game-card-actions .join-btn { border: none; border-radius: 8px; background: var(--gradient-button); color: var(--text-primary); padding: 10px 30px; font-weight: 600; cursor: pointer; }
 
 
-    // --- Application State ---
-    let selectedStake = null;
-    let selectedWinCondition = null;
-    let socket = null;
-    let allGames = []; // A local cache of all active games
+/* --- Modal Styles --- */
+.modal-overlay {
+    position: fixed; inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    display: flex; justify-content: center; align-items: flex-end;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+.modal-content {
+    background-color: var(--primary-dark);
+    width: 100%;
+    padding: 15px;
+    border-radius: 20px 20px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-out;
+}
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-header h2 { font-size: 1.2em; font-weight: 600; }
+.close-modal-btn { background: var(--card-dark); border: none; color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; font-size: 1.2em; cursor: pointer; }
 
-    // --- Real-Time WebSocket Logic ---
-    function connectWebSocket() {
-        // Using secure wss:// for production
-        socket = new WebSocket("wss://yeab-kass.onrender.com/ws");
+.options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
+.option-btn { border: 1px solid var(--card-dark); background-color: var(--card-dark); border-radius: 10px; padding: 15px 5px; color: var(--text-secondary); font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s ease; }
+.option-btn.selected { border-color: var(--gradient-start); background: var(--gradient-button); color: var(--text-primary); }
+.option-btn small { font-weight: 400; color: var(--text-muted); display: block; font-size: 0.7em; margin-top: 2px; }
 
-        socket.onopen = () => console.log("WebSocket connection established.");
-        socket.onclose = () => console.log("WebSocket connection closed.");
-        socket.onerror = (error) => console.error("WebSocket error:", error);
+.modal-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px; }
+.modal-action-btn { border: none; border-radius: 12px; padding: 15px; font-size: 1.1em; font-weight: 600; cursor: pointer; }
+.cancel { background-color: var(--accent-red); color: var(--text-primary); }
+.next { background: var(--gradient-button); color: var(--text-primary); }
+.next:disabled { background: #333; color: var(--text-muted); cursor: not-allowed; }
 
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            switch (data.event) {
-                case "initial_game_list":
-                    allGames = data.games;
-                    renderGameList(allGames);
-                    break;
-                case "new_game":
-                    allGames.push(data.game);
-                    addGameCard(data.game);
-                    break;
-                case "remove_game":
-                    allGames = allGames.filter(game => game.id !== data.gameId);
-                    removeGameCard(data.gameId);
-                    break;
-            }
-        };
-    }
+/* --- Confirmation Modal Specifics --- */
+.summary-container { background-color: var(--card-dark); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+.summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 500; }
+#summary-stake-amount { color: var(--accent-green); font-weight: 600; }
+.summary-details { display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px; }
+.summary-box { background-color: var(--primary-dark); border-radius: 10px; padding: 10px; text-align: center; }
+.summary-box label { font-size: 0.9em; color: var(--text-muted); display: block; margin-bottom: 5px; }
+.summary-icon { font-size: 1.2em; display: block; margin-bottom: 5px; }
+.win-condition-selector { display: flex; justify-content: center; gap: 5px; }
+.win-option-btn { flex-grow: 1; border: 1px solid #444; background-color: transparent; color: var(--text-secondary); padding: 8px 5px; border-radius: 6px; cursor: pointer; }
+.win-option-btn.selected { background: var(--gradient-button); border-color: var(--gradient-start); color: var(--text-primary); }
 
-    // --- UI Rendering & View Management ---
-    function renderGameList(games) {
-        gameListContainer.innerHTML = '';
-        if (games.length === 0) {
-            gameListContainer.innerHTML = `<h3 class="empty-state-title">No open games. Create one!</h3>`;
-        } else {
-            games.forEach(addGameCard);
-        }
-    }
-
-    function addGameCard(game) {
-        const emptyState = gameListContainer.querySelector('.empty-state-title');
-        if (emptyState) emptyState.remove();
-
-        const cardElement = document.createElement('div');
-        // ... (code to create the game card element) ...
-        gameListContainer.appendChild(cardElement);
-    }
-    
-    function removeGameCard(gameId) {
-        const cardToRemove = getEl(`game-${gameId}`);
-        if (cardToRemove) cardToRemove.remove();
-        if (gameListContainer.children.length === 0) {
-            renderGameList([]);
-        }
-    }
-
-    const showStakeModal = () => {
-        mainApp.style.filter = 'blur(5px)';
-        stakeModal.classList.remove('hidden');
-    };
-    
-    const hideStakeModal = () => {
-        mainApp.style.filter = 'none';
-        stakeModal.classList.add('hidden');
-    };
-    
-    // =========================================================
-    // =========== START: MODIFIED SECTION =====================
-    // =========================================================
-    
-    /**
-     * [NEW] Calculates and displays the prize based on the selected stake.
-     * This function contains the injected logic.
-     */
-    const updateSummary = () => {
-        if (!selectedStake) return;
-
-        const numberOfPlayers = 2;
-        const commissionRate = 0.10;
-
-        // Update stake display
-        summaryStakeAmount.textContent = `Stake: ${selectedStake} ETB`;
-
-        // Calculate prize with 10% commission
-        const totalPot = selectedStake * numberOfPlayers;
-        const finalPrize = totalPot - (totalPot * commissionRate);
-
-        // Display the final prize
-        summaryPrizeAmount.textContent = `${finalPrize.toFixed(2)} ETB`;
-    };
-
-    /**
-     * [MODIFIED] Shows the confirmation modal and now calls updateSummary.
-     */
-    const showConfirmModal = () => {
-        hideStakeModal();
-        mainApp.style.filter = 'blur(5px)';
-        confirmModal.classList.remove('hidden');
-        updateSummary(); // <--- This line injects the logic
-    };
-    
-    // =========================================================
-    // ============= END: MODIFIED SECTION =====================
-    // =========================================================
-
-    const hideConfirmModal = () => {
-        mainApp.style.filter = 'none';
-        confirmModal.classList.add('hidden');
-    };
-    
-    function setupEventListeners() {
-        // The "+ NEW" button opens the stake modal
-        if (newGameBtn) {
-            newGameBtn.addEventListener('click', showStakeModal);
-        }
-
-        // The filter buttons filter the game list
-        if (filtersContainer) {
-            filtersContainer.addEventListener('click', (event) => {
-                const button = event.target.closest('.filter-button');
-                if (!button) return;
-
-                filtersContainer.querySelector('.active')?.classList.remove('active');
-                button.classList.add('active');
-
-                const filterText = button.textContent.replace('💰 ', '');
-                let filteredGames = allGames;
-
-                if (filterText !== 'All') {
-                    if (filterText.includes('-')) {
-                        const [min, max] = filterText.split('-').map(Number);
-                        filteredGames = allGames.filter(g => g.stake >= min && g.stake <= max);
-                    } else {
-                        const min = parseInt(filterText);
-                        filteredGames = allGames.filter(g => g.stake >= min);
-                    }
-                }
-                renderGameList(filteredGames);
-            });
-        }
-        
-        // Listeners for modals
-        if (closeStakeModalBtn) closeStakeModalBtn.addEventListener('click', hideStakeModal);
-        if (cancelStakeBtn) cancelStakeBtn.addEventListener('click', hideStakeModal);
-        if (nextStakeBtn) nextStakeBtn.addEventListener('click', showConfirmModal); // This triggers the logic
-        
-        if (closeConfirmModalBtn) closeConfirmModalBtn.addEventListener('click', hideConfirmModal);
-        if (cancelConfirmBtn) cancelConfirmBtn.addEventListener('click', hideConfirmModal);
-        
-        if (stakeOptionsGrid) {
-            stakeOptionsGrid.addEventListener('click', e => {
-                const button = e.target.closest('.option-btn');
-                if (button) {
-                    stakeOptionsGrid.querySelector('.selected')?.classList.remove('selected');
-                    button.classList.add('selected');
-                    selectedStake = parseInt(button.dataset.stake);
-                    nextStakeBtn.disabled = false;
-                }
-            });
-        }
-        
-        if (winConditionOptions) {
-             winConditionOptions.addEventListener('click', e => {
-                const button = e.target.closest('.win-option-btn');
-                if (button) {
-                    winConditionOptions.querySelector('.selected')?.classList.remove('selected');
-                    button.classList.add('selected');
-                    selectedWinCondition = parseInt(button.dataset.win);
-                    createGameBtn.disabled = false;
-                }
-            });
-        }
-
-        if (createGameBtn) {
-            createGameBtn.addEventListener('click', () => {
-                // Your existing logic to send data via WebSocket
-            });
-        }
-    }
-
-    // --- Initial Application Load ---
-    const init = () => {
-        loadingScreen.classList.add('hidden');
-        mainApp.classList.remove('hidden');
-        setupEventListeners();
-        connectWebSocket();
-    };
-    
-    setTimeout(init, 3000);
-});
+.summary-prize { background-color: var(--card-dark); border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
+.prize-info { display: flex; align-items: center; gap: 10px; }
+.prize-info label { font-weight: 500; }
+.prize-info small { font-size: 0.8em; color: var(--text-muted); }
+#summary-prize-amount { font-size: 1.4em; font-weight: 700; color: var(--accent-green); }
