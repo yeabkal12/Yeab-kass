@@ -1,4 +1,4 @@
-# app.py (The Final, Unified Version with Database, Bot, and Real-Time)
+# app.py (The Final, Definitive Version with the Connection Bridge Injected)
 
 import logging
 import os
@@ -33,13 +33,13 @@ bot_app: Application | None = None
 class ConnectionManager:
     """Manages active WebSocket connections."""
     def __init__(self):
-        self.active_connections: Dict[WebSocket, int] = {}
-    async def connect(self, websocket: WebSocket, user_id: int):
+        self.active_connections: List[WebSocket] = [] # Simplified for this fix
+    async def connect(self, websocket: WebSocket):
         await websocket.accept()
-        self.active_connections[websocket] = user_id
+        self.active_connections.append(websocket)
     def disconnect(self, websocket: WebSocket):
         if websocket in self.active_connections:
-            del self.active_connections[websocket]
+            self.active_connections.remove(websocket)
     async def broadcast(self, message: str):
         for connection in self.active_connections:
             await connection.send_text(message)
@@ -73,9 +73,21 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, 
 if not TELEGRAM_BOT_TOKEN:
     logger.error("FATAL: TELEGRAM_BOT_TOKEN is not set! Bot will be disabled.")
 else:
-    ptb_application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    # =========================================================
+    # =========== START: INJECTED CHANGE #1 (The Bridge) ======
+    # =========================================================
+    ptb_application_builder = Application.builder().token(TELEGRAM_BOT_TOKEN)
+    
+    # We add our connection manager to the bot's shared data.
+    # Now, any handler inside bot/handlers.py can access it.
+    ptb_application_builder.bot_data["connection_manager"] = manager
+    
+    ptb_application = ptb_application_builder.build()
     bot_app = setup_handlers(ptb_application)
     logger.info("Telegram bot application created and handlers have been attached.")
+    # =========================================================
+    # ============= END: INJECTED CHANGE #1 ===================
+    # =========================================================
 
 
 # --- 5. API ENDPOINTS (BOT & HTTP) ---
@@ -87,7 +99,6 @@ async def telegram_webhook(request: Request):
     try:
         data = await request.json()
         update = Update.de_json(data, bot_app.bot)
-        # By passing the manager, handlers can now broadcast messages
         await bot_app.process_update(update)
         return Response(status_code=200)
     except Exception as e:
@@ -111,14 +122,10 @@ async def get_game_details_as_dict(game_id: int) -> Dict:
             "winCondition": row.win_condition
         }
 
-# =========================================================
-# =========== INJECTED REAL-TIME ENDPOINT =================
-# =========================================================
-
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: int):
     """Handles real-time connections for live lobby updates."""
-    await manager.connect(websocket, user_id)
+    await manager.connect(websocket)
     try:
         # Send initial game list from the database
         async with get_db_session() as session:
@@ -131,22 +138,29 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
         await websocket.send_text(json.dumps({"event": "initial_game_list", "games": initial_games}))
 
         while True:
+            # =========================================================
+            # ======= START: INJECTED CHANGE #2 (Join Logic) ==========
+            # =========================================================
+            # The websocket now listens for the 'join_game' action from the frontend
             data = await websocket.receive_json()
             action = data.get("action")
             
-            # This is now the primary way games are joined
             if action == "join_game":
                 game_id_to_join = data.get("gameId")
+                logger.info(f"User {user_id} is attempting to join game {game_id_to_join}")
+                
                 async with get_db_session() as session:
-                    # Here you would add logic to check if the user can join,
-                    # update the game status from 'lobby' to 'active', etc.
-                    # For now, we'll just delete it from the lobby.
+                    # Logic to remove the game from the lobby
                     stmt = delete(games).where(games.c.id == game_id_to_join)
                     await session.execute(stmt)
                     await session.commit()
                 
                 # Announce to everyone that the game is now gone
                 await manager.broadcast(json.dumps({"event": "remove_game", "gameId": game_id_to_join}))
+                logger.info(f"Broadcasted removal of game {game_id_to_join}")
+            # =========================================================
+            # ========= END: INJECTED CHANGE #2 =======================
+            # =========================================================
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
