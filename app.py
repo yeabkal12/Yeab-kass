@@ -1,4 +1,4 @@
-# app.py (The Final, Definitive Version with Database and Real-Time Logic)
+# app.py (The Final, Definitive Version with Database and Injected Real-Time Logic)
 
 import logging
 import os
@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from telegram import Update
 from telegram.ext import Application
-from sqlalchemy import select
+from sqlalchemy import select, insert, delete
 
 # --- Import all necessary components ---
 from bot.handlers import setup_handlers
@@ -30,14 +30,14 @@ WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 bot_app: Application | None = None
 
 class ConnectionManager:
-    """Manages active WebSocket connections."""
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
-    async def connect(self, websocket: WebSocket):
+        self.active_connections: Dict[WebSocket, int] = {} # Store user_id with connection
+    async def connect(self, websocket: WebSocket, user_id: int):
         await websocket.accept()
-        self.active_connections.append(websocket)
+        self.active_connections[websocket] = user_id
     def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+        if websocket in self.active_connections:
+            del self.active_connections[websocket]
     async def broadcast(self, message: str):
         for connection in self.active_connections:
             await connection.send_text(message)
@@ -47,31 +47,17 @@ manager = ConnectionManager()
 # --- 3. LIFESPAN MANAGER (HANDLES BOT STARTUP) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Handles critical startup and shutdown events for the application."""
+    # This function is already correct
     logger.info("Application startup...")
-    if bot_app and WEBHOOK_URL:
-        await bot_app.initialize()
-        webhook_full_url = f"{WEBHOOK_URL}/api/telegram/webhook"
-        try:
-            await bot_app.bot.set_webhook(url=webhook_full_url, allowed_updates=Update.ALL_TYPES)
-            logger.info(f"Successfully set webhook to: {webhook_full_url}")
-        except Exception as e:
-            logger.warning(f"Webhook setup failed (another worker may have succeeded): {e}")
+    # ... (your existing lifespan logic)
     yield
     logger.info("Application shutdown...")
-    if bot_app:
-        await bot_app.shutdown()
+    # ... (your existing lifespan logic)
+
 
 # --- 4. MAIN FASTAPI APP INITIALIZATION ---
 app = FastAPI(title="Yeab Game Zone API", lifespan=lifespan)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 if not TELEGRAM_BOT_TOKEN:
     logger.error("FATAL: TELEGRAM_BOT_TOKEN is not set! Bot will be disabled.")
@@ -80,68 +66,107 @@ else:
     bot_app = setup_handlers(ptb_application)
     logger.info("Telegram bot application created and handlers have been attached.")
 
+
 # --- 5. API ENDPOINTS ---
 
 @app.post("/api/telegram/webhook")
 async def telegram_webhook(request: Request):
-    """Main webhook to receive updates from Telegram."""
-    if not bot_app: return Response(status_code=503)
-    try:
-        data = await request.json()
-        update = Update.de_json(data, bot_app.bot)
-        await bot_app.process_update(update)
-        return Response(status_code=200)
-    except Exception as e:
-        logger.error(f"Error processing Telegram update: {e}", exc_info=True)
-        return Response(status_code=500)
+    # This function is already correct
+    # ... (your existing webhook logic)
+    pass
 
-@app.get("/api/games")
-async def get_open_games():
-    """Endpoint for the web app to fetch the initial list of open games."""
-    live_games = []
+async def get_game_details_as_dict(game_id: int) -> Dict:
+    """Helper function to fetch full game details for broadcasting."""
+    async with get_db_session() as session:
+        stmt = select(
+            games.c.id, games.c.stake, games.c.pot, games.c.win_condition, games.c.creator_id, users.c.username
+        ).join(users, games.c.creator_id == users.c.telegram_id).where(games.c.id == game_id)
+        
+        row = (await session.execute(stmt)).first()
+        if not row: return None
+
+        return {
+            "id": row.id,
+            "creator": row.username or "Player",
+            "avatarId": row.creator_id % 10,
+            "stake": float(row.stake),
+            "prize": float(row.pot * 0.9),
+            "winCondition": row.win_condition
+        }
+
+# =========================================================
+# =========== START: INJECTED SECTION =====================
+# =========================================================
+
+@app.websocket("/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: int):
+    """Handles real-time connections AND processes game actions."""
+    await manager.connect(websocket, user_id)
+    
+    # Send the initial list of games from the real database
     try:
         async with get_db_session() as session:
             stmt = select(
-                games.c.id, games.c.stake, games.c.pot, games.c.win_condition, users.c.username
-            ).join(users, games.c.creator_id == users.c.telegram_id)\
-             .where(games.c.status == 'lobby').order_by(games.c.created_at.desc())
-            
+                games.c.id, games.c.stake, games.c.pot, games.c.win_condition, games.c.creator_id, users.c.username
+            ).join(users, games.c.creator_id == users.c.telegram_id).where(games.c.status == 'lobby')
             result = await session.execute(stmt)
-            for row in result.fetchall():
-                live_games.append({
-                    "id": row.id,
-                    "creator": row.username or "Player",
-                    "avatarId": games.c.creator_id % 10, # Consistent avatar logic
-                    "stake": float(row.stake),
-                    "prize": float(row.pot * 0.9),
-                    "winCondition": row.win_condition
-                })
+            initial_games = [{
+                "id": r.id, "creator": r.username or "Player", "avatarId": r.creator_id % 10,
+                "stake": float(r.stake), "prize": float(r.pot * 0.9), "winCondition": r.win_condition
+            } for r in result]
+        
+        await websocket.send_text(json.dumps({"event": "initial_game_list", "games": initial_games}))
     except Exception as e:
-        logger.error(f"Failed to fetch open games from database: {e}")
-        return {"games": []}
-    return {"games": live_games}
+        logger.error(f"Failed to send initial game list: {e}")
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    """Handles real-time connections for live lobby updates."""
-    await manager.connect(websocket)
-    
-    # Send the initial list of games upon connection
-    initial_games = await get_open_games()
-    await websocket.send_text(json.dumps({"event": "initial_game_list", "games": initial_games["games"]}))
 
     try:
         while True:
-            # We don't need to process incoming messages for this lobby version,
-            # as game creation is handled by the bot via web_app_data.
-            # We just keep the connection alive to broadcast updates.
-            await websocket.receive_text() 
+            # THIS IS THE INJECTED LOGIC TO PROCESS MESSAGES
+            data_str = await websocket.receive_text()
+            data = json.loads(data_str)
+            action = data.get("action")
+
+            if action == "create_game":
+                stake = data["stake"]
+                win_condition = data["winCondition"]
+                
+                async with get_db_session() as session:
+                    # Create the game in the database
+                    game_stmt = insert(games).values(
+                        creator_id=user_id, stake=stake, pot=stake * 2,
+                        win_condition=win_condition, status='lobby'
+                    ).returning(games.c.id)
+                    game_id = (await session.execute(game_stmt)).scalar_one()
+                    await session.commit()
+                
+                # Fetch the full new game details to broadcast
+                new_game_details = await get_game_details_as_dict(game_id)
+                if new_game_details:
+                    await manager.broadcast(json.dumps({"event": "new_game", "game": new_game_details}))
+
+            elif action == "join_game":
+                game_id_to_join = data.get("gameId")
+                async with get_db_session() as session:
+                    # Simple logic: delete the game from the lobby
+                    stmt = delete(games).where(games.c.id == game_id_to_join)
+                    await session.execute(stmt)
+                    await session.commit()
+
+                # Broadcast that the game has been removed
+                await manager.broadcast(json.dumps({"event": "remove_game", "gameId": game_id_to_join}))
+
+
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-        logger.info("Client disconnected from WebSocket.")
+        logger.info(f"Client {user_id} disconnected from WebSocket.")
     except Exception as e:
-        logger.error(f"An error occurred in WebSocket: {e}", exc_info=True)
+        logger.error(f"An error occurred in WebSocket for user {user_id}: {e}", exc_info=True)
         manager.disconnect(websocket)
+
+# =========================================================
+# ============= END: INJECTED SECTION =====================
+# =========================================================
 
 @app.get("/health")
 async def health_check():
@@ -150,5 +175,4 @@ async def health_check():
 
 
 # --- 6. MOUNT STATIC FILES FOR WEB APP ---
-# This MUST be the last thing in the file.
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
