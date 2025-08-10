@@ -1,16 +1,23 @@
+# render.yaml - The Final and Correct Version
+
 services:
   # This single web service runs both the FastAPI backend and the Telegram bot logic
   - name: yeab-game-zone
     type: web
     env: python
+    # Ensure your Python version matches what you develop with
+    pythonVersion: '3.11' # Or your specific Python version
     buildCommand: "pip install -r requirements.txt"
-    # The start command now points to the 'app' object in the root 'app.py' file
+    # This start command points to the 'app' object in the root 'app.py'
     startCommand: "gunicorn -w 4 -k uvicorn.workers.UvicornWorker app:app"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
           name: yeab-game-zone-db
           property: connectionString
+          # This option is CRITICAL to prevent the async driver error
+          options:
+            protocol: "postgresql+asyncpg"
       - key: TELEGRAM_BOT_TOKEN
         sync: false # Keep your token secret
       - key: CHAPA_API_KEY
@@ -18,17 +25,10 @@ services:
       - key: WEBHOOK_URL
         fromService:
           type: web
-          name: yeab-game-zone # Must match the service name
+          name: yeab-game-zone # Must match this service's name
           property: url
 
-  # The database service remains the same
+  # The database service definition
   - name: yeab-game-zone-db
     type: psql
-    version: "14"```
-
-### **Step 4: Final Cleanup**
-
-1.  **Delete `bot.py`:** You no longer need the `bot.py` file in your root directory, as its logic is now inside `app.py`. Deleting it will prevent confusion.
-2.  **Verify Imports:** Double-check that all imports in `bot/handlers.py` and other modules correctly reference modules relative to the root directory. The provided code already does this.
-
-With these changes, your project now has a clean, unified structure centered around a single `app.py` file, making it easier to manage and deploy.
+    version: "14"
