@@ -49,7 +49,13 @@ body {
 
 /* --- Main App UI --- */
 #main-app { padding: 15px; transition: filter 0.3s ease-in-out; }
-.app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.app-header {
+    position: relative; /* Added for positioning the status indicator */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
 .user-info { display: flex; align-items: center; gap: 10px; }
 .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--card-dark); display: flex; justify-content: center; align-items: center; }
 .user-avatar svg { width: 24px; height: 24px; color: var(--text-primary); }
@@ -160,3 +166,46 @@ body {
 .prize-info label { font-weight: 500; }
 .prize-info small { font-size: 0.8em; color: var(--text-muted); }
 #summary-prize-amount { font-size: 1.4em; font-weight: 700; color: var(--accent-green); }
+
+
+/* --- NEW: Connection Status Styles --- */
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%); /* Center the status indicator */
+}
+
+#status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transition: background-color 0.5s ease;
+}
+
+#status-indicator.disconnected {
+    background-color: var(--accent-red); /* Red */
+}
+
+#status-indicator.connecting {
+    background-color: #FFA726; /* Orange */
+    animation: pulse 1.5s infinite;
+}
+
+#status-indicator.connected {
+    background-color: var(--accent-green); /* Green */
+}
+
+#status-text {
+    font-size: 0.8em;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
