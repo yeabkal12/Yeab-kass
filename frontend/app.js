@@ -1,21 +1,17 @@
-// frontend/app.js (The Definitive Fix - All Buttons Working)
+// frontend/app.js (The Definitive Version)
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Initialize Telegram & Basic Setup ---
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
     
     const getEl = id => document.getElementById(id);
 
-    // --- DOM Element References ---
     const loadingScreen = getEl('loading-screen');
     const mainApp = getEl('main-app');
     const gameListContainer = getEl('game-list-container');
     const newGameBtn = getEl('new-game-btn');
     const filtersContainer = document.querySelector('.filters');
-    
-    // Modal Elements
     const stakeModal = getEl('stake-modal');
     const nextStakeBtn = getEl('next-stake-btn');
     const stakeOptionsGrid = getEl('stake-options-grid');
@@ -25,17 +21,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const summaryStakeAmount = getEl('summary-stake-amount');
     const summaryPrizeAmount = getEl('summary-prize-amount');
 
-    // --- Application State ---
     let selectedStake = null;
     let selectedWinCondition = null;
     let socket = null;
     let allGames = [];
 
-    // --- WebSocket Logic with Error Handling ---
     function connectWebSocket() {
-        gameListContainer.innerHTML = `<h3 class="empty-state-title">Connecting to server...</h3>`;
         socket = new WebSocket("wss://yeab-kass.onrender.com/ws");
-
         socket.onopen = () => console.log("WebSocket connection established.");
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
@@ -54,24 +46,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
             }
         };
-        socket.onerror = (error) => {
-            console.error("FATAL WebSocket error:", error);
-            gameListContainer.innerHTML = `<h3 class="error-message">Could not connect to game server. Please refresh.</h3>`;
-        };
+        // Add error and close handlers for robustness
+        socket.onerror = (error) => console.error("WebSocket Error:", error);
+        socket.onclose = () => console.log("WebSocket connection closed.");
     }
 
-    // --- UI Rendering ---
     const createGameCardElement = (game) => {
         const card = document.createElement('div');
         card.className = 'game-card';
         card.id = `game-${game.id}`;
         const maskedUsername = game.creator ? `@${game.creator.substring(0, 3)}***${game.creator.slice(-1)}` : '@Player***';
-        const avatarUrl = 'assets/avatars/default_avatar.png'; // Using your permanent avatar
-
+        
         card.innerHTML = `
             <div class="card-player-info">
-                <div class="player-avatar">
-                    <img src="${avatarUrl}" alt="Avatar">
+                <div class="player-avatar pilot-icon">
+                    🧑‍✈️
                     <span class="star">⭐</span>
                 </div>
                 <div class="player-details">
@@ -96,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="prize">${game.prize} ብር</span>
                 </div>
             </div>`;
+        
         card.querySelector('.join-btn').addEventListener('click', () => {
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ action: "join_game", gameId: game.id }));
@@ -105,8 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const addGameCard = (game, atTop = false) => {
-        const emptyState = gameListContainer.querySelector('.empty-state-container') || gameListContainer.querySelector('.empty-state-title');
-        if (emptyState) emptyState.parentElement.innerHTML = '';
+        const emptyState = gameListContainer.querySelector('.empty-state-container');
+        if (emptyState) emptyState.remove();
         const cardElement = createGameCardElement(game);
         if (atTop) gameListContainer.prepend(cardElement);
         else gameListContainer.appendChild(cardElement);
@@ -135,7 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Modal & Summary Logic ---
     const updateSummary = () => {
         if (!selectedStake) return;
         summaryStakeAmount.textContent = `Stake: ${selectedStake} ETB`;
@@ -171,9 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
         nextStakeBtn.disabled = true;
     };
 
-    // =========================================================
-    // =========== THE FUNCTION THAT ACTIVATES ALL BUTTONS =====
-    // =========================================================
     function setupEventListeners() {
         if (newGameBtn) newGameBtn.addEventListener('click', showStakeModal);
 
@@ -183,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!button) return;
                 filtersContainer.querySelector('.active')?.classList.remove('active');
                 button.classList.add('active');
-
+                
                 const filterText = button.textContent.replace('💰 ', '').trim();
                 let filteredGames;
                 if (filterText === 'All') filteredGames = allGames;
@@ -198,16 +184,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // Stake Modal Buttons
         if (getEl('close-stake-modal-btn')) getEl('close-stake-modal-btn').addEventListener('click', hideStakeModal);
         if (getEl('cancel-stake-btn')) getEl('cancel-stake-btn').addEventListener('click', hideStakeModal);
         if (nextStakeBtn) nextStakeBtn.addEventListener('click', showConfirmModal);
-        
-        // Confirm Modal Buttons
         if (getEl('close-confirm-modal-btn')) getEl('close-confirm-modal-btn').addEventListener('click', hideConfirmModal);
         if (getEl('cancel-confirm-btn')) getEl('cancel-confirm-btn').addEventListener('click', hideConfirmModal);
-
-        // Stake and Win Condition Selection Logic
+        
         if (stakeOptionsGrid) {
             stakeOptionsGrid.addEventListener('click', e => {
                 const button = e.target.closest('.option-btn');
@@ -232,7 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Final Create Game Button
         if (createGameBtn) {
             createGameBtn.addEventListener('click', () => {
                 if (selectedStake && selectedWinCondition && socket?.readyState === WebSocket.OPEN) {
@@ -247,17 +228,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Initial Application Load ---
     const init = () => {
-        loadingScreen.classList.add('hidden');
-        mainApp.classList.remove('hidden');
-        
-        // THIS IS THE CRITICAL FIX: We now call the function that activates the buttons.
-        setupEventListeners(); 
-        
-        connectWebSocket();
+        try {
+            loadingScreen.classList.add('hidden');
+            mainApp.classList.remove('hidden');
+            setupEventListeners();
+            connectWebSocket();
+        } catch (error) {
+            console.error("Fatal error during init:", error);
+            const statusText = document.querySelector('#loading-screen .status-text');
+            if (statusText) statusText.textContent = "Error: App failed to start.";
+        }
     };
     
-    // Start the app after a short delay
-    setTimeout(init, 1000); 
+    setTimeout(init, 2000);
 });
