@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Next Ludo Games</title>
+    <title>Yaba Games</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,7 @@
 <body>
 
     <!-- ======== 1. LOADING SCREEN VIEW ======== -->
-    <div id="loading-screen">
+    <div id="loading-view" class="view">
         <div class="loading-content">
             <svg class="loading-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M50 5L15.45 27.5V72.5L50 95L84.55 72.5V27.5L50 5Z" stroke="white" stroke-width="3"/>
@@ -21,15 +21,13 @@
                 <path d="M15.45 72.5L84.55 27.5" stroke="white" stroke-width="1.5"/>
             </svg>
             <h1 class="brand-name">Yaba Games</h1>
-            <div class="progress-bar-container">
-                <div class="progress-bar-motion"></div>
-            </div>
             <p class="status-text">Loading...</p>
+            <div class="spinner"></div>
         </div>
     </div>
 
-    <!-- ======== 2. MAIN APP VIEW ======== -->
-    <div id="main-app" class="hidden">
+    <!-- ======== 2. MAIN APP (GAME LIST) VIEW ======== -->
+    <div id="main-view" class="view hidden">
         <header class="app-header">
             <div class="user-info">
                 <div class="user-avatar">
@@ -45,90 +43,79 @@
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path></svg>
                     NEW
                 </button>
-                <button id="refresh-btn" class="action-button refresh-button">
-                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"></path></svg>
-                </button>
             </div>
         </header>
-
         <div class="filters">
             <button class="filter-button active">All</button>
             <button class="filter-button">💰 20-100</button>
             <button class="filter-button">💰 200-700</button>
             <button class="filter-button">💰 1000+</button>
         </div>
-
         <div id="game-list-container">
-            <!-- Game cards or empty state injected here by app.js -->
+            <!-- Game cards or empty state injected here -->
         </div>
     </div>
 
-    <!-- ======== 3. STAKE SELECTION MODAL ======== -->
-    <div id="stake-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-handle"></div>
-            <button id="close-stake-modal-btn" class="close-modal-btn">&times;</button>
-            <h2>Stake Amount</h2>
-            <div id="stake-options-grid" class="options-grid">
-                <button class="option-btn" data-stake="20">💰 20<small>ETB</small></button>
-                <button class="option-btn" data-stake="30">💰 30<small>ETB</small></button>
-                <button class="option-btn" data-stake="50">💰 50<small>ETB</small></button>
-                <button class="option-btn" data-stake="100">💰 100<small>ETB</small></button>
-                <button class="option-btn" data-stake="200">💰 200<small>ETB</small></button>
-                <button class="option-btn" data-stake="300">💰 300<small>ETB</small></button>
-                <button class="option-btn" data-stake="500">💰 500<small>ETB</small></button>
-                <button class="option-btn" data-stake="700">💰 700<small>ETB</small></button>
-                <button class="option-btn" data-stake="1000">💰 1000<small>ETB</small></button>
-            </div>
-            <div class="modal-actions">
-                <button id="cancel-stake-btn" class="modal-action-btn cancel">Cancel</button>
-                <button id="next-stake-btn" class="modal-action-btn next" disabled>Next</button>
-            </div>
+    <!-- ======== 3. STAKE SELECTION VIEW ======== -->
+    <div id="stake-view" class="view hidden">
+        <button class="back-btn" data-target="main-view">✖</button>
+        <h2>Stake Amount</h2>
+        <div class="options-grid">
+            <button class="option-btn" data-stake="20">💰 20<small>ETB</small></button>
+            <button class="option-btn" data-stake="30">💰 30<small>ETB</small></button>
+            <button class="option-btn" data-stake="50">💰 50<small>ETB</small></button>
+            <button class="option-btn" data-stake="100">💰 100<small>ETB</small></button>
+            <button class="option-btn" data-stake="200">💰 200<small>ETB</small></button>
+            <button class="option-btn" data-stake="300">💰 300<small>ETB</small></button>
+            <button class="option-btn" data-stake="500">💰 500<small>ETB</small></button>
+            <button class="option-btn" data-stake="700">💰 700<small>ETB</small></button>
+            <button class="option-btn" data-stake="1000">💰 1000<small>ETB</small></button>
+        </div>
+        <div class="page-actions">
+            <button class="action-btn-page cancel" data-target="main-view">Cancel</button>
+            <button id="next-stake-btn" class="action-btn-page next" disabled>Next</button>
         </div>
     </div>
 
-    <!-- ======== 4. CONFIRMATION MODAL ======== -->
-    <div id="confirm-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-handle"></div>
-            <button id="close-confirm-modal-btn" class="close-modal-btn">&times;</button>
-            <h2>Confirm</h2>
-            <div class="summary-container">
-                <div class="summary-header">
-                    <span>🎮 Game Summary</span>
-                    <span id="summary-stake-amount">Stake: 0 ETB</span>
+    <!-- ======== 4. CONFIRMATION VIEW ======== -->
+    <div id="confirm-view" class="view hidden">
+        <button class="back-btn" data-target="stake-view">✖</button>
+        <h2>Confirm</h2>
+        <div class="summary-container">
+            <div class="summary-header">
+                <span>🎮 Game Summary</span>
+                <span id="summary-stake-amount">Stake: 0 ETB</span>
+            </div>
+            <div class="summary-details">
+                <div class="summary-box">
+                    <span class="summary-icon">👥</span>
+                    <label>Players</label>
+                    <strong>2</strong>
                 </div>
-                <div class="summary-details">
-                    <div class="summary-box">
-                        <span class="summary-icon">👥</span>
-                        <label>Players</label>
-                        <strong>2</strong>
+                <div class="summary-box">
+                    <span class="summary-icon">👑</span>
+                    <label>To Win</label>
+                    <div id="win-condition-options" class="win-condition-selector">
+                        <button class="win-option-btn" data-win="1">1 Piece</button>
+                        <button class="win-option-btn" data-win="2">2 Pieces</button>
+                        <button class="win-option-btn" data-win="4">4 Pieces</button>
                     </div>
-                    <div class="summary-box">
-                        <span class="summary-icon">👑</span>
-                        <label>To Win</label>
-                        <div id="win-condition-options" class="win-condition-selector">
-                            <button class="win-option-btn" data-win="1">1 Piece</button>
-                            <button class="win-option-btn" data-win="2">2 Pieces</button>
-                            <button class="win-option-btn" data-win="4">4 Pieces</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="summary-prize">
-                    <div class="prize-info">
-                        <span class="summary-icon">🏆</span>
-                        <div>
-                            <label>Total Prize</label>
-                            <small>Winner takes all</small>
-                        </div>
-                    </div>
-                    <strong id="summary-prize-amount">0 ETB</strong>
                 </div>
             </div>
-            <div class="modal-actions">
-                <button id="cancel-confirm-btn" class="modal-action-btn cancel">Cancel</button>
-                <button id="create-game-btn" class="modal-action-btn next" disabled>Create Game</button>
+            <div class="summary-prize">
+                <div class="prize-info">
+                    <span class="summary-icon">🏆</span>
+                    <div>
+                        <label>Total Prize</label>
+                        <small>Winner takes all</small>
+                    </div>
+                </div>
+                <strong id="summary-prize-amount">0 ETB</strong>
             </div>
+        </div>
+        <div class="page-actions">
+            <button class="action-btn-page cancel" data-target="stake-view">Cancel</button>
+            <button id="create-game-btn" class="action-btn-page next" disabled>Create Game</button>
         </div>
     </div>
 
