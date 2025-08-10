@@ -1,4 +1,4 @@
-// frontend/app.js (Refactored for Single-Page Views)
+// app.js - Final Version
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Initialize Telegram & Basic Setup ---
@@ -6,21 +6,28 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.ready();
     tg.expand();
 
-    // --- View & Element References ---
-    const views = document.querySelectorAll('.view');
     const getEl = id => document.getElementById(id);
 
+    // --- DOM Element References ---
+    const loadingScreen = getEl('loading-screen');
+    const mainApp = getEl('main-app');
     const gameListContainer = getEl('game-list-container');
     const newGameBtn = getEl('new-game-btn');
     const filtersContainer = document.querySelector('.filters');
 
-    // Stake View Elements
+    // Stake Modal Elements
+    const stakeModal = getEl('stake-modal');
+    const closeStakeModalBtn = getEl('close-stake-modal-btn');
     const stakeOptionsGrid = getEl('stake-options-grid');
+    const cancelStakeBtn = getEl('cancel-stake-btn');
     const nextStakeBtn = getEl('next-stake-btn');
 
-    // Confirm View Elements
+    // Confirm Modal Elements
+    const confirmModal = getEl('confirm-modal');
+    const closeConfirmModalBtn = getEl('close-confirm-modal-btn');
     const winConditionOptions = getEl('win-condition-options');
     const createGameBtn = getEl('create-game-btn');
+    const cancelConfirmBtn = getEl('cancel-confirm-btn');
     const summaryStakeAmount = getEl('summary-stake-amount');
     const summaryPrizeAmount = getEl('summary-prize-amount');
 
@@ -30,138 +37,135 @@ document.addEventListener('DOMContentLoaded', () => {
     let socket = null;
     let allGames = [];
 
-    // --- View Management ---
-    function showView(viewId) {
-        views.forEach(view => {
-            view.classList.add('hidden');
-        });
-        const targetView = getEl(viewId);
-        if (targetView) {
-            targetView.classList.remove('hidden');
-        }
-    }
-
-    // --- Real-Time WebSocket Logic ---
+    // --- WebSocket Logic ---
     function connectWebSocket() {
-        socket = new WebSocket("wss://yeab-kass.onrender.com/ws");
+        socket = new WebSocket("wss://yeab-kass.onrender.com/ws"); // Replace with your WebSocket URL
         socket.onopen = () => console.log("WebSocket connection established.");
         socket.onclose = () => console.log("WebSocket connection closed.");
-        socket.onerror = (error) => console.error("WebSocket error:", error);
-
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            switch (data.event) {
-                case "initial_game_list":
-                    allGames = data.games;
-                    renderGameList(allGames);
-                    break;
-                case "new_game":
-                    allGames.unshift(data.game);
-                    renderGameList(allGames);
-                    break;
-                // ... other cases
+            if (data.event === "initial_game_list") {
+                allGames = data.games;
+                renderGameList(allGames);
+            } else if (data.event === "new_game") {
+                allGames.unshift(data.game); // Add new games to the top
+                renderGameList(allGames);
             }
         };
     }
 
     // --- UI Rendering ---
     function renderGameList(games) {
-        gameListContainer.innerHTML = ''; // Clear previous list
+        gameListContainer.innerHTML = '';
         if (games.length === 0) {
-            // New empty state from the screenshot
-            gameListContainer.innerHTML = `
-                <div class="empty-state-container">
-                    <h2 class="empty-state-title">No Open Games Found</h2>
-                    <p class="empty-state-subtitle">Be the first to create one!</p>
-                    <div class="create-game-card" id="empty-state-create-btn">
-                        <div class="plus-icon">+</div>
-                        <div class="create-text">Create New Game</div>
-                    </div>
-                </div>
-            `;
-            getEl('empty-state-create-btn').addEventListener('click', () => showView('stake-view'));
+            gameListContainer.innerHTML = `<h3 class="empty-state-title">No Open Games</h3>`;
         } else {
             games.forEach(addGameCard);
         }
     }
 
-    function addGameCard(game) { /* ... your existing addGameCard logic ... */ }
+    function addGameCard(game) {
+        const cardElement = document.createElement('div');
+        cardElement.className = 'game-card';
+        cardElement.id = `game-${game.id}`;
+        const prize = (game.stake * 2) * 0.9; // 10% commission
 
-    // --- Game Creation Flow Logic ---
-    function updateSummary() {
-        if (!selectedStake) return;
-        const numberOfPlayers = 2;
-        const commissionRate = 0.10;
-        summaryStakeAmount.textContent = `Stake: ${selectedStake} ETB`;
-        const totalPot = selectedStake * numberOfPlayers;
-        const finalPrize = totalPot - (totalPot * commissionRate);
-        summaryPrizeAmount.textContent = `${finalPrize.toFixed(2)} ETB`;
+        cardElement.innerHTML = `
+            <div class="game-card-player">
+                <div class="avatar"></div>
+            </div>
+            <div>
+                <div class="username">${game.creatorName || '@Pla***9'}</div>
+                <div class="stake">${game.stake} ETB</div>
+            </div>
+            <div class="game-card-details">
+                <div class="icon">👑</div>
+                <div class="text">${game.win_condition} Piece</div>
+            </div>
+            <div class="game-card-actions">
+                <div class="prize-label">Prize</div>
+                <div class="prize">${prize.toFixed(2)} ETB</div>
+                <button class="join-btn">Join</button>
+            </div>
+        `;
+        gameListContainer.appendChild(cardElement);
     }
 
-    // --- Event Listeners Setup ---
-    function setupEventListeners() {
-        // Main header button
-        newGameBtn.addEventListener('click', () => showView('stake-view'));
+    // --- Modal Management ---
+    const showModal = (modal) => {
+        modal.classList.remove('hidden');
+        setTimeout(() => { // Allow display change before adding class
+            mainApp.style.filter = 'blur(5px)';
+            modal.classList.add('active');
+        }, 10);
+    };
 
-        // Navigation between views
-        nextStakeBtn.addEventListener('click', () => {
-            updateSummary();
-            showView('confirm-view');
-        });
+    const hideModal = (modal) => {
+        mainApp.style.filter = 'none';
+        modal.classList.remove('active');
+        setTimeout(() => modal.classList.add('hidden'), 300); // Wait for transition
+    };
 
-        // Universal back/cancel buttons
-        document.querySelectorAll('.back-btn, .cancel').forEach(button => {
-            button.addEventListener('click', () => {
-                const targetViewId = button.getAttribute('data-target');
-                showView(targetViewId);
-            });
-        });
+    // --- Event Listeners ---
+    newGameBtn.addEventListener('click', () => showModal(stakeModal));
+    closeStakeModalBtn.addEventListener('click', () => hideModal(stakeModal));
+    cancelStakeBtn.addEventListener('click', () => hideModal(stakeModal));
 
-        // Stake selection
-        stakeOptionsGrid.addEventListener('click', e => {
-            const button = e.target.closest('.option-btn');
-            if (button) {
-                stakeOptionsGrid.querySelector('.selected')?.classList.remove('selected');
-                button.classList.add('selected');
-                selectedStake = parseInt(button.dataset.stake);
-                nextStakeBtn.disabled = false;
-            }
-        });
+    nextStakeBtn.addEventListener('click', () => {
+        hideModal(stakeModal);
+        updateSummary();
+        showModal(confirmModal);
+    });
 
-        // Win condition selection
-        winConditionOptions.addEventListener('click', e => {
-            const button = e.target.closest('.win-option-btn');
-            if (button) {
-                winConditionOptions.querySelector('.selected')?.classList.remove('selected');
-                button.classList.add('selected');
-                selectedWinCondition = parseInt(button.dataset.win);
-                createGameBtn.disabled = false;
-            }
-        });
+    closeConfirmModalBtn.addEventListener('click', () => hideModal(confirmModal));
+    cancelConfirmBtn.addEventListener('click', () => hideModal(confirmModal));
 
-        // Final "Create Game" action
-        createGameBtn.addEventListener('click', () => {
-            if (!selectedStake || !selectedWinCondition || !socket) return;
-            const gameData = {
-                event: "create_game",
-                payload: { stake: selectedStake, winCondition: selectedWinCondition }
-            };
-            socket.send(JSON.stringify(gameData));
-            showView('main-view'); // Go back to the main list
-        });
+    stakeOptionsGrid.addEventListener('click', e => {
+        const button = e.target.closest('.option-btn');
+        if (button) {
+            stakeOptionsGrid.querySelector('.selected')?.classList.remove('selected');
+            button.classList.add('selected');
+            selectedStake = parseInt(button.dataset.stake);
+            nextStakeBtn.disabled = false;
+        }
+    });
 
-        // Filter logic (remains the same)
-        filtersContainer.addEventListener('click', (event) => { /* ... your filter logic ... */ });
+    winConditionOptions.addEventListener('click', e => {
+        const button = e.target.closest('.win-option-btn');
+        if (button) {
+            winConditionOptions.querySelector('.selected')?.classList.remove('selected');
+            button.classList.add('selected');
+            selectedWinCondition = parseInt(button.dataset.win);
+            createGameBtn.disabled = false;
+        }
+    });
+
+    createGameBtn.addEventListener('click', () => {
+        if (!socket || !selectedStake || !selectedWinCondition) return;
+        const gameData = {
+            event: "create_game",
+            payload: { stake: selectedStake, winCondition: selectedWinCondition }
+        };
+        socket.send(JSON.stringify(gameData));
+        hideModal(confirmModal);
+    });
+    
+    // --- Summary Logic ---
+    function updateSummary() {
+        if (!selectedStake) return;
+        const prize = (selectedStake * 2) * 0.9;
+        summaryStakeAmount.textContent = `Stake: ${selectedStake} ETB`;
+        summaryPrizeAmount.textContent = `${prize.toFixed(2)} ETB`;
     }
 
     // --- Initial Application Load ---
     function init() {
-        setupEventListeners();
-        connectWebSocket();
-        // Show the main view after a delay, hiding the loading view
         setTimeout(() => {
-            showView('main-view');
-        }, 1500); // Shorter, more realistic loading time
+            loadingScreen.style.opacity = '0';
+            mainApp.classList.remove('hidden');
+            setTimeout(() => loadingScreen.remove(), 500);
+            connectWebSocket();
+        }, 2000); // Simulate loading time
     }
 
     init();
