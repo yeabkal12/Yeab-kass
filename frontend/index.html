@@ -11,9 +11,7 @@
 </head>
 <body>
 
-    <!-- ============================================= -->
-    <!-- ========= 1. LOADING SCREEN VIEW ============ -->
-    <!-- ============================================= -->
+    <!-- ======== 1. LOADING SCREEN VIEW ======== -->
     <div id="loading-screen">
         <div class="loading-content">
             <svg class="loading-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -21,10 +19,8 @@
                 <path d="M50 5L50 95" stroke="white" stroke-width="1.5"/>
                 <path d="M15.45 27.5L84.55 72.5" stroke="white" stroke-width="1.5"/>
                 <path d="M15.45 72.5L84.55 27.5" stroke="white" stroke-width="1.5"/>
-                <path d="M15.45 27.5L50 50L15.45 72.5" stroke="white" stroke-width="1.5"/>
-                <path d="M84.55 27.5L50 50L84.55 72.5" stroke="white" stroke-width="1.5"/>
             </svg>
-            <h1 class="brand-name">yaba Games</h1>
+            <h1 class="brand-name">Yaba Games</h1>
             <div class="progress-bar-container">
                 <div class="progress-bar-motion"></div>
             </div>
@@ -32,9 +28,7 @@
         </div>
     </div>
 
-    <!-- ============================================= -->
-    <!-- =========== 2. MAIN APP VIEW ================ -->
-    <!-- ============================================= -->
+    <!-- ======== 2. MAIN APP VIEW ======== -->
     <div id="main-app" class="hidden">
         <header class="app-header">
             <div class="user-info">
@@ -52,7 +46,7 @@
                     NEW
                 </button>
                 <button id="refresh-btn" class="action-button refresh-button">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"></path></svg>
+                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"></path></svg>
                 </button>
             </div>
         </header>
@@ -61,32 +55,30 @@
             <button class="filter-button active">All</button>
             <button class="filter-button">💰 20-100</button>
             <button class="filter-button">💰 200-700</button>
-            <button class="filter-button">💰 1000</button>
+            <button class="filter-button">💰 1000+</button>
         </div>
 
         <div id="game-list-container">
-            <!-- Game cards or empty state injected here -->
+            <!-- Game cards or empty state injected here by app.js -->
         </div>
     </div>
 
-    <!-- ============================================= -->
-    <!-- ======== 3. STAKE SELECTION MODAL =========== -->
-    <!-- ============================================= -->
+    <!-- ======== 3. STAKE SELECTION MODAL ======== -->
     <div id="stake-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-handle"></div>
             <button id="close-stake-modal-btn" class="close-modal-btn">&times;</button>
             <h2>Stake Amount</h2>
             <div id="stake-options-grid" class="options-grid">
-                <button class="option-btn" data-stake="20">💰 20 <small>ብር</small></button>
-                <button class="option-btn" data-stake="30">💰 30 <small>ብር</small></button>
-                <button class="option-btn" data-stake="50">💰 50 <small>ብር</small></button>
-                <button class="option-btn" data-stake="100">💰 100 <small>ብር</small></button>
-                <button class="option-btn" data-stake="200">💰 200 <small>ብር</small></button>
-                <button class="option-btn" data-stake="300">💰 300 <small>ብር</small></button>
-                <button class="option-btn" data-stake="500">💰 500 <small>ብር</small></button>
-                <button class="option-btn" data-stake="700">💰 700 <small>ብር</small></button>
-                <button class="option-btn" data-stake="1000">💰 1000 <small>ብር</small></button>
+                <button class="option-btn" data-stake="20">💰 20<small>ETB</small></button>
+                <button class="option-btn" data-stake="30">💰 30<small>ETB</small></button>
+                <button class="option-btn" data-stake="50">💰 50<small>ETB</small></button>
+                <button class="option-btn" data-stake="100">💰 100<small>ETB</small></button>
+                <button class="option-btn" data-stake="200">💰 200<small>ETB</small></button>
+                <button class="option-btn" data-stake="300">💰 300<small>ETB</small></button>
+                <button class="option-btn" data-stake="500">💰 500<small>ETB</small></button>
+                <button class="option-btn" data-stake="700">💰 700<small>ETB</small></button>
+                <button class="option-btn" data-stake="1000">💰 1000<small>ETB</small></button>
             </div>
             <div class="modal-actions">
                 <button id="cancel-stake-btn" class="modal-action-btn cancel">Cancel</button>
@@ -94,10 +86,8 @@
             </div>
         </div>
     </div>
-    
-    <!-- ============================================= -->
-    <!-- ======== 4. CONFIRMATION MODAL ============== -->
-    <!-- ============================================= -->
+
+    <!-- ======== 4. CONFIRMATION MODAL ======== -->
     <div id="confirm-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-handle"></div>
@@ -141,7 +131,6 @@
             </div>
         </div>
     </div>
-
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="app.js"></script>
