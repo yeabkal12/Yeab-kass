@@ -1,38 +1,35 @@
-# database_models/manager.py - The Final and Correct Version
+# database_models/manager.py - The final and correct version with URL fix
 
 import os
-from contextlib import asynccontextmanager
-
 from sqlalchemy import (Column, BigInteger, String, DECIMAL, JSON, Integer, Text)
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Ensure the DATABASE_URL is set in the environment, otherwise fail fast.
+# 1. Get the standard database URL from the environment
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    raise ValueError("FATAL ERROR: The DATABASE_URL environment variable is not set.")
+    raise ValueError("FATAL ERROR: DATABASE_URL environment variable is not set.")
 
-# The engine is the main entry point to our database.
+# 2. THE BULLETPROOF FIX:
+# Manually ensure the driver is asyncpg.
+# The standard URL from Render is "postgresql://...". We replace it.
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+# 3. Create the engine with the corrected URL
 engine = create_async_engine(DATABASE_URL)
 
-# The sessionmaker provides a factory for creating database sessions.
+# --- The rest of the file remains the same ---
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-# This is the base class that all our database models will inherit from.
 Base = declarative_base()
 
-
-# --- ORM MODEL DEFINITIONS ---
 class User(Base):
-    """Defines the 'users' table in the database."""
     __tablename__ = "users"
     telegram_id = Column(BigInteger, primary_key=True)
     username = Column(String, nullable=True)
     balance = Column(DECIMAL(10, 2), nullable=False, default=0.00)
 
-
 class Game(Base):
-    """Defines the 'games' table in the database."""
     __tablename__ = "games"
     id = Column(String, primary_key=True)
     creator_id = Column(BigInteger, nullable=False)
@@ -44,22 +41,10 @@ class Game(Base):
     message_id = Column(BigInteger, nullable=True)
     chat_id = Column(BigInteger, nullable=True)
 
-
 class Transaction(Base):
-    """Defines the 'transactions' table in the database."""
     __tablename__ = "transactions"
     tx_ref = Column(Text, primary_key=True)
     user_id = Column(BigInteger, nullable=False)
     amount = Column(DECIMAL(10, 2), nullable=False)
     type = Column(String, nullable=False)
     status = Column(String, default="pending")
-
-
-@asynccontextmanager
-async def get_db_session():
-    """Provides a safe way to interact with the database session."""
-    session = AsyncSessionLocal()
-    try:
-        yield session
-    finally:
-        await session.close()
