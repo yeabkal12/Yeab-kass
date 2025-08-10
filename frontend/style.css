@@ -1,10 +1,10 @@
-/* frontend/styles.css (Redesigned Version) */
+/* frontend/styles.css (Refactored for Single-Page Views) */
 
 /* --- Global Setup & Color Palette --- */
 :root {
-    --background-dark: #10101A;
-    --primary-dark: #1A1A2E;
-    --card-dark: #1D1D34;
+    --background-dark: #1A1A2E; /* Changed for a slightly lighter dark background */
+    --primary-dark: #10101A;   /* Primary elements will be darker */
+    --card-dark: #2C2C3E;       /* A lighter card color */
     --text-primary: #FFFFFF;
     --text-secondary: #EAEAEA;
     --text-muted: #8F8F8F;
@@ -19,144 +19,104 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    background-color: var(--primary-dark);
+    background-color: var(--background-dark);
     color: var(--text-primary);
     overscroll-behavior: none;
     -webkit-font-smoothing: antialiased;
+    padding: 15px;
 }
 
-/* --- Utility Class --- */
+/* --- View Management --- */
+.view { width: 100%; }
 .hidden { display: none !important; }
 
 /* --- Loading Screen --- */
-#loading-screen {
+#loading-view {
+    display: flex; justify-content: center; align-items: center; text-align: center;
     position: fixed; inset: 0;
-    background-color: #000;
-    display: flex; justify-content: center; align-items: center;
+    background-color: var(--background-dark);
     z-index: 1000;
 }
-.loading-content { text-align: center; }
-.loading-logo { width: 80px; height: 80px; }
-.brand-name { font-size: 1.5em; font-weight: 600; margin-top: 10px; }
-.progress-bar-container { width: 150px; height: 5px; background-color: #333; border-radius: 2.5px; margin: 20px auto 0; overflow: hidden; }
-.progress-bar-motion { width: 100%; height: 100%; background: var(--text-primary); animation: loading-motion 3s linear forwards; }
-@keyframes loading-motion {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(0); }
+.loading-logo { width: 100px; height: 100px; }
+.brand-name { font-size: 1.8em; font-weight: 600; margin: 15px 0; }
+.status-text { font-size: 1em; color: var(--text-muted); margin-bottom: 40px; }
+.spinner {
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    background-color: #000; /* As per screenshot */
+    margin: 0 auto;
 }
-.status-text { margin-top: 15px; font-size: 1em; color: var(--text-muted); }
-
 
 /* --- Main App UI --- */
-#main-app { padding: 15px; }
 .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .user-info { display: flex; align-items: center; gap: 10px; }
 .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--gradient-button); display: flex; justify-content: center; align-items: center; }
 .user-avatar svg { width: 24px; height: 24px; color: var(--text-primary); }
-.user-balance { background-color: var(--card-dark); padding: 8px 12px; border-radius: 18px; font-weight: 600; font-size: 0.9em; }
+.user-balance { background-color: var(--primary-dark); padding: 8px 12px; border-radius: 18px; font-weight: 600; font-size: 0.9em; }
 .header-actions { display: flex; gap: 10px; }
 .action-button { border: none; border-radius: 8px; padding: 10px; display: flex; align-items: center; gap: 5px; font-weight: 600; color: var(--text-primary); cursor: pointer; }
 .action-button svg { width: 20px; height: 20px; }
 .new-button { background-color: var(--accent-green); padding-right: 15px; }
-.refresh-button { background-color: #333; }
 
 /* --- Filters --- */
 .filters { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; }
-.filter-button { border: none; border-radius: 20px; padding: 8px 16px; background-color: var(--card-dark); color: var(--text-secondary); font-size: 0.9em; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.filter-button { border: none; border-radius: 20px; padding: 8px 16px; background-color: var(--primary-dark); color: var(--text-secondary); font-size: 0.9em; font-weight: 500; cursor: pointer; white-space: nowrap; }
 .filter-button.active { background: var(--gradient-button); color: var(--text-primary); }
 
-/* --- Game List & Cards --- */
-#game-list-container { text-align: center; }
-.empty-state-title { font-size: 1.1em; font-weight: 500; color: var(--text-muted); margin: 40px 0 20px 0; }
-.empty-state-btn { border: none; border-radius: 12px; width: 100%; padding: 15px; font-size: 1.1em; font-weight: 600; color: var(--text-primary); background: var(--gradient-button); cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
-.empty-state-btn svg { width: 22px; height: 22px; }
-
-.game-card {
-    background-color: var(--card-dark);
-    border-radius: 12px;
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    animation: fadeIn 0.5s ease-out;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.game-card .player-info { display: flex; align-items: center; gap: 10px; }
-.game-card .player-info .avatar { width: 40px; height: 40px; border-radius: 50%; background-color: var(--gradient-start); /* In real app, this would be an <img> */ }
-.game-card .player-info .name { font-weight: 500; }
-.game-card .player-info .stake { font-size: 0.8em; color: var(--text-muted); }
-.game-card .game-details { text-align: center; }
-.game-card .game-details .win-text { font-weight: 600; }
-.game-card .game-details .win-subtext { font-size: 0.8em; color: var(--text-muted); }
-.game-card .stake-details { text-align: right; }
-.game-card .stake-details .prize-label { font-size: 0.8em; color: var(--text-muted); }
-.game-card .stake-details .prize { color: var(--accent-green); font-weight: 600; }
-.game-card .join-btn {
-    border: none;
-    border-radius: 8px;
-    background: var(--gradient-button);
-    color: var(--text-primary);
-    padding: 10px 25px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 8px;
-}
-
-
-/* --- Modal Styles --- */
-.modal-overlay {
-    position: fixed; inset: 0;
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(5px);
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    z-index: 500;
-}
-.modal-content {
+/* --- Game List & Empty State --- */
+.empty-state-container { text-align: center; margin-top: 40px; }
+.empty-state-title { font-size: 1.3em; font-weight: 600; margin-bottom: 8px; }
+.empty-state-subtitle { font-size: 1em; color: var(--text-muted); margin-bottom: 25px; }
+.create-game-card {
     background-color: var(--primary-dark);
-    width: 100%;
-    padding: 15px;
-    border-radius: 20px 20px 0 0;
-    position: relative;
-    animation: slide-up 0.3s ease-out;
+    border-radius: 12px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
-@keyframes slide-up {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
+.create-game-card .plus-icon { font-size: 4em; font-weight: 200; line-height: 1; }
+.create-game-card .create-text { margin-top: 15px; font-weight: 500; }
+
+/* --- Game Card (When games exist) --- */
+.game-card { /* Your existing game-card styles... */ }
+
+/* --- Stake & Confirm Views --- */
+.back-btn {
+    position: absolute; top: 15px; right: 15px;
+    background: var(--primary-dark);
+    color: var(--text-muted);
+    border: none; border-radius: 50%;
+    width: 30px; height: 30px;
+    font-size: 1em; font-weight: bold; cursor: pointer;
 }
-.modal-handle { width: 40px; height: 4px; background-color: #444; border-radius: 2px; margin: 0 auto 15px; }
-.close-modal-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--accent-red); font-size: 1.5em; font-weight: bold; cursor: pointer; }
-.modal-content h2 { text-align: left; margin-bottom: 20px; font-weight: 600; }
+#stake-view h2, #confirm-view h2 { text-align: left; margin-bottom: 20px; font-weight: 600; }
 
 .options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
-.option-btn { border: 1px solid var(--card-dark); background-color: var(--card-dark); border-radius: 10px; padding: 15px 5px; color: var(--text-secondary); font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s ease; }
+.option-btn { border: 1px solid var(--primary-dark); background-color: var(--primary-dark); border-radius: 10px; padding: 15px 5px; color: var(--text-secondary); font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s ease; }
 .option-btn.selected { border-color: var(--gradient-start); background: var(--gradient-button); color: var(--text-primary); transform: scale(1.05); }
 .option-btn small { font-weight: 400; color: var(--text-muted); display: block; font-size: 0.7em; }
 
-.modal-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px; }
-.modal-action-btn { border: none; border-radius: 12px; padding: 15px; font-size: 1.1em; font-weight: 600; cursor: pointer; }
+.page-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px; }
+.action-btn-page { border: none; border-radius: 12px; padding: 15px; font-size: 1.1em; font-weight: 600; cursor: pointer; }
 .cancel { background-color: var(--accent-red); color: var(--text-primary); }
 .next { background: var(--gradient-button); color: var(--text-primary); }
 .next:disabled { background: #333; color: var(--text-muted); cursor: not-allowed; }
 
-/* --- Confirmation Modal Specifics --- */
-.summary-container { background-color: var(--card-dark); border-radius: 12px; padding: 15px; margin-bottom: 25px; }
+/* --- Confirmation View Specifics --- */
+.summary-container { background-color: var(--primary-dark); border-radius: 12px; padding: 15px; margin-bottom: 25px; }
 .summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 500; }
 #summary-stake-amount { color: var(--accent-green); font-weight: 600; }
 .summary-details { display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px; margin-bottom: 15px; }
-.summary-box { background-color: var(--primary-dark); border-radius: 10px; padding: 10px; text-align: center; }
+.summary-box { background-color: var(--background-dark); border-radius: 10px; padding: 10px; text-align: center; }
 .summary-box label { font-size: 0.9em; color: var(--text-muted); display: block; margin-bottom: 5px; }
 .summary-icon { font-size: 1.2em; display: block; margin-bottom: 5px; }
 .win-condition-selector { display: flex; justify-content: center; gap: 5px; }
 .win-option-btn { flex-grow: 1; border: 1px solid #444; background-color: transparent; color: var(--text-secondary); padding: 8px 5px; border-radius: 6px; cursor: pointer; }
 .win-option-btn.selected { background: var(--gradient-button); border-color: var(--gradient-start); color: var(--text-primary); }
-
-.summary-prize { background-color: var(--primary-dark); border-radius: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+.summary-prize { background-color: var(--background-dark); border-radius: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
 .prize-info { display: flex; align-items: center; gap: 10px; }
 .prize-info small { font-size: 0.8em; color: var(--text-muted); }
 #summary-prize-amount { font-size: 1.4em; font-weight: 700; color: var(--accent-green); }
