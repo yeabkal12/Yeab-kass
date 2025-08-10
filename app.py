@@ -1,89 +1,116 @@
-# app.py
 import asyncio
 import json
+import os
 import uuid
-from typing import List, Dict, Any
+from typing import Dict, List, Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.future import select
 
-# --- In-Memory Storage ---
-# In a real production app, you would replace this with a database like Redis or PostgreSQL.
-# The key is the game_id (a string), and the value is the game dictionary.
-active_games: Dict[str, Dict[str, Any]] = {}
+# Import database session and models from your project structure
+from database_models.manager import AsyncSessionLocal, Game, User
 
-app = FastAPI(title="Yaba Games WebSocket Server")
+app = FastAPI(title="Yeab Game Zone API")
 
 # --- CORS Middleware ---
-# Allows your frontend (even when testing locally) to connect to the server.
+# Allows your frontend to connect to this backend, essential for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins
+    allow_origins=["*"],  # Allows all origins
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
+# --- Connection Management & Real-Time Presence ---
 class ConnectionManager:
-    """Manages active WebSocket connections to broadcast messages."""
+    """Manages active WebSocket connections and user presence."""
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
+        # Maps a user's telegram_id to their active WebSocket connection
+        self.active_connections: Dict[int, WebSocket] = {}
 
-    async def connect(self, websocket: WebSocket):
-        """Accepts and stores a new WebSocket connection."""
+    async def connect(self, websocket: WebSocket, user_id: int):
+        """Accepts and stores a new WebSocket connection for a given user."""
         await websocket.accept()
-        self.active_connections.append(websocket)
+        self.active_connections[user_id] = websocket
+        print(f"Client connected: {user_id}")
 
-    def disconnect(self, websocket: WebSocket):
-        """Removes a WebSocket connection."""
-        self.active_connections.remove(websocket)
+    async def disconnect(self, user_id: int):
+        """Removes a user's WebSocket connection."""
+        if user_id in self.active_connections:
+            del self.active_connections[user_id]
+            print(f"Client disconnected: {user_id}")
 
-    async def broadcast(self, message: str):
-        """Sends a message to all active connections."""
-        for connection in self.active_connections:
-            await connection.send_text(message)
+    async def broadcast(self, message: dict):
+        """Sends a JSON message to all active connections."""
+        message_str = json.dumps(message)
+        # Create a list of tasks to send messages concurrently
+        tasks = [
+            connection.send_text(message_str)
+            for connection in self.active_connections.values()
+        ]
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+    async def send_personal_message(self, message: dict, user_id: int):
+        """Sends a personal JSON message to a specific user."""
+        if user_id in self.active_connections:
+            await self.active_connections[user_id].send_text(json.dumps(message))
 
 manager = ConnectionManager()
 
-def create_game_object(stake: int, win_condition: int, creator_name: str) -> Dict[str, Any]:
-    """Creates a new game dictionary with a unique ID and calculates the prize."""
-    game_id = str(uuid.uuid4())
-    commission_rate = 0.10
-    total_pot = stake * 2
-    prize = total_pot - (total_pot * commission_rate)
+# --- Core Disconnect Logic ---
+async def handle_disconnect(user_id: int):
+    """
+    Handles cleaning up when a user disconnects.
+    Specifically, removes any 'waiting' games created by that user.
+    """
+    async with AsyncSessionLocal() as session:
+        # Find games created by this user that are still waiting for an opponent
+        stmt = select(Game).where(Game.creator_id == user_id, Game.status == 'waiting')
+        result = await session.execute(stmt)
+        games_to_remove = result.scalars().all()
 
-    return {
-        "id": game_id,
-        "stake": stake,
-        "win_condition": win_condition,
-        "prize": round(prize, 2),
-        "creatorName": creator_name or "Player***", # Use provided name or a default
-        "players": [creator_name], # Start with the creator as the first player
-        "status": "waiting",
-    }
+        if not games_to_remove:
+            return
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    """The main WebSocket endpoint for handling all real-time game logic."""
-    await manager.connect(websocket)
-    print("A new client connected.")
+        for game in games_to_remove:
+            print(f"Creator {user_id} disconnected, removing waiting game {game.id}")
+            # Delete the game lobby from the database
+            await session.delete(game)
+            await session.commit()
 
-    # 1. Send the initial list of games to the newly connected client
+            # Broadcast to all other users that this game has been removed
+            await manager.broadcast({
+                "event": "remove_game",
+                "gameId": game.id
+            })
+
+# --- WebSocket Endpoint ---
+@app.websocket("/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: int):
+    await manager.connect(websocket, user_id)
     try:
-        initial_data = {
-            "event": "initial_game_list",
-            # We send games in reverse order so newest appear first
-            "games": list(reversed(list(active_games.values())))
-        }
-        await websocket.send_text(json.dumps(initial_data))
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        print("Client disconnected before initialization.")
-        return
+        # 1. Send the initial list of currently open games to the new user
+        async with AsyncSessionLocal() as session:
+            stmt = select(Game).where(Game.status == 'waiting').order_by(Game.id.desc())
+            result = await session.execute(stmt)
+            games = result.scalars().all()
+            
+            # Prepare the game list with all data the frontend needs, including prize
+            game_list = [
+                {
+                    "id": game.id,
+                    "creatorName": "Anonymous", # Or fetch from User model if available
+                    "stake": float(game.stake),
+                    "win_condition": game.win_condition,
+                    "prize": float(game.stake) * 2 * 0.9  # Calculate 90% prize
+                } for game in games
+            ]
+            await manager.send_personal_message({"event": "initial_game_list", "games": game_list}, user_id)
 
-    try:
+        # 2. Listen for incoming messages from the user
         while True:
-            # 2. Listen for incoming messages from the client
             data = await websocket.receive_text()
             message = json.loads(data)
             event = message.get("event")
@@ -92,37 +119,44 @@ async def websocket_endpoint(websocket: WebSocket):
                 payload = message.get("payload", {})
                 stake = payload.get("stake")
                 win_condition = payload.get("winCondition")
-                # You can get user info from the Telegram Web App initData
-                creator_name = payload.get("creatorName", "Anonymous")
 
-                if stake is not None and win_condition is not None:
-                    # Create and store the new game
-                    new_game = create_game_object(stake, win_condition, creator_name)
-                    active_games[new_game["id"]] = new_game
-                    print(f"New game created: {new_game['id']} with stake {stake}")
+                if stake is None or win_condition is None:
+                    continue
+                
+                # Create a new game object for the database
+                new_game = Game(
+                    id=str(uuid.uuid4()),
+                    creator_id=user_id,
+                    stake=stake,
+                    win_condition=win_condition,
+                    status='waiting'
+                )
+                async with AsyncSessionLocal() as session:
+                    session.add(new_game)
+                    await session.commit()
+                
+                # Prepare the game data to be broadcasted to all users
+                game_data_for_broadcast = {
+                    "id": new_game.id,
+                    "creatorName": "Anonymous",
+                    "stake": float(new_game.stake),
+                    "win_condition": new_game.win_condition,
+                    "prize": float(new_game.stake) * 2 * 0.9 # Calculate prize
+                }
+                
+                await manager.broadcast({"event": "new_game", "game": game_data_for_broadcast})
 
-                    # Broadcast the new game to ALL connected clients
-                    broadcast_message = {
-                        "event": "new_game",
-                        "game": new_game
-                    }
-                    await manager.broadcast(json.dumps(broadcast_message))
-
-            # --- You would add other events here ---
-            # For example: "join_game", "player_move", "game_over", etc.
-            # elif event == "join_game":
-            #   ... handle logic for a player joining a game ...
-
+            # ... You will add other events here like "join_game", "roll_dice", etc.
 
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        print("Client disconnected.")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        manager.disconnect(websocket)
+        # This block executes when the client's connection is lost
+        await handle_disconnect(user_id)
+    finally:
+        # Always ensure the connection is removed from the manager
+        await manager.disconnect(user_id)
 
-
+# --- Root Endpoint ---
 @app.get("/")
 def read_root():
     """A simple root endpoint to confirm the server is running."""
-    return {"status": "Yaba Games Server is running", "active_games": len(active_games)}
+    return {"status": "Yeab Game Zone API is running"}
