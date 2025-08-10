@@ -11,7 +11,9 @@
 </head>
 <body>
 
-    <!-- Loading Screen -->
+    <!-- ============================================= -->
+    <!-- ========= 1. LOADING SCREEN VIEW ============ -->
+    <!-- ============================================= -->
     <div id="loading-screen">
         <div class="loading-content">
             <svg class="loading-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -30,7 +32,9 @@
         </div>
     </div>
 
-    <!-- Main App View -->
+    <!-- ============================================= -->
+    <!-- =========== 2. MAIN APP VIEW ================ -->
+    <!-- ============================================= -->
     <div id="main-app" class="hidden">
         <header class="app-header">
             <div class="user-info">
@@ -57,15 +61,17 @@
             <button class="filter-button active">All</button>
             <button class="filter-button">💰 20-100</button>
             <button class="filter-button">💰 200-700</button>
-            <button class="filter-button">💰 1000+</button>
+            <button class="filter-button">💰 1000</button>
         </div>
 
         <div id="game-list-container">
-            <!-- Game cards or the empty state will be injected here by app.js -->
+            <!-- Game cards or empty state injected here -->
         </div>
     </div>
 
-    <!-- Stake Selection Modal -->
+    <!-- ============================================= -->
+    <!-- ======== 3. STAKE SELECTION MODAL =========== -->
+    <!-- ============================================= -->
     <div id="stake-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-handle"></div>
@@ -89,7 +95,9 @@
         </div>
     </div>
     
-    <!-- Confirmation Modal -->
+    <!-- ============================================= -->
+    <!-- ======== 4. CONFIRMATION MODAL ============== -->
+    <!-- ============================================= -->
     <div id="confirm-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-handle"></div>
@@ -133,6 +141,7 @@
             </div>
         </div>
     </div>
+
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="app.js"></script>
