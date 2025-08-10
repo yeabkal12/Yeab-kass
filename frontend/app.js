@@ -1,4 +1,4 @@
-// frontend/app.js (The Definitive Version)
+// frontend/app.js (The Definitive, Reconstructed Version with Mage Avatar)
 
 document.addEventListener('DOMContentLoaded', () => {
     const tg = window.Telegram.WebApp;
@@ -12,12 +12,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameListContainer = getEl('game-list-container');
     const newGameBtn = getEl('new-game-btn');
     const filtersContainer = document.querySelector('.filters');
+    const refreshBtn = getEl('refresh-btn');
+    
     const stakeModal = getEl('stake-modal');
-    const nextStakeBtn = getEl('next-stake-btn');
+    const closeStakeModalBtn = getEl('close-stake-modal-btn');
     const stakeOptionsGrid = getEl('stake-options-grid');
+    const cancelStakeBtn = getEl('cancel-stake-btn');
+    const nextStakeBtn = getEl('next-stake-btn');
+    
     const confirmModal = getEl('confirm-modal');
+    const closeConfirmModalBtn = getEl('close-confirm-modal-btn');
     const winConditionOptions = getEl('win-condition-options');
     const createGameBtn = getEl('create-game-btn');
+    const cancelConfirmBtn = getEl('cancel-confirm-btn');
     const summaryStakeAmount = getEl('summary-stake-amount');
     const summaryPrizeAmount = getEl('summary-prize-amount');
 
@@ -46,9 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
             }
         };
-        // Add error and close handlers for robustness
-        socket.onerror = (error) => console.error("WebSocket Error:", error);
-        socket.onclose = () => console.log("WebSocket connection closed.");
     }
 
     const createGameCardElement = (game) => {
@@ -59,8 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         card.innerHTML = `
             <div class="card-player-info">
-                <div class="player-avatar pilot-icon">
-                    🧑‍✈️
+                <div class="player-avatar mage-icon">
+                    🧙
                     <span class="star">⭐</span>
                 </div>
                 <div class="player-details">
@@ -71,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="card-game-rules">
                 <div class="win-condition">
                     <div class="crowns">${'👑'.repeat(game.winCondition)}</div>
-                    <span>${game.winCondition} ጠጠር ባነገሰ</span>
+                    <span>${game.winCondition} ጠጠር</span>
                 </div>
                 <button class="join-btn" data-game-id="${game.id}">Join</button>
             </div>
@@ -184,11 +188,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        if (getEl('close-stake-modal-btn')) getEl('close-stake-modal-btn').addEventListener('click', hideStakeModal);
-        if (getEl('cancel-stake-btn')) getEl('cancel-stake-btn').addEventListener('click', hideStakeModal);
+        if (closeStakeModalBtn) closeStakeModalBtn.addEventListener('click', hideStakeModal);
+        if (cancelStakeBtn) cancelStakeBtn.addEventListener('click', hideStakeModal);
         if (nextStakeBtn) nextStakeBtn.addEventListener('click', showConfirmModal);
-        if (getEl('close-confirm-modal-btn')) getEl('close-confirm-modal-btn').addEventListener('click', hideConfirmModal);
-        if (getEl('cancel-confirm-btn')) getEl('cancel-confirm-btn').addEventListener('click', hideConfirmModal);
+        if (closeConfirmModalBtn) closeConfirmModalBtn.addEventListener('click', hideConfirmModal);
+        if (cancelConfirmBtn) cancelConfirmBtn.addEventListener('click', hideConfirmModal);
         
         if (stakeOptionsGrid) {
             stakeOptionsGrid.addEventListener('click', e => {
@@ -241,5 +245,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    setTimeout(init, 2000);
+    setTimeout(init, 8000);
 });
