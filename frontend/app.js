@@ -1,91 +1,66 @@
-// frontend/app.js (The Definitive, Bulletproof Version)
+// REPLACE the old renderGameList and addGameCard functions in your app.js with these.
 
-document.addEventListener('DOMContentLoaded', () => {
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-    
-    const userId = tg.initDataUnsafe?.user?.id || Math.floor(Math.random() * 100000);
-    const getEl = id => document.getElementById(id);
-
-    // --- DOM References ---
-    const loadingScreen = getEl('loading-screen');
-    const mainApp = getEl('main-app');
-    const gameListContainer = getEl('game-list-container');
-    const newGameBtn = getEl('new-game-btn');
-    const filtersContainer = document.querySelector('.filters');
-    const stakeModal = getEl('stake-modal');
-    const nextStakeBtn = getEl('next-stake-btn');
-    const stakeOptionsGrid = getEl('stake-options-grid');
-    const confirmModal = getEl('confirm-modal');
-    const winConditionOptions = getEl('win-condition-options');
-    const createGameBtn = getEl('create-game-btn');
-    const summaryStakeAmount = getEl('summary-stake-amount');
-    const summaryPrizeAmount = getEl('summary-prize-amount');
-
-    let selectedStake = null;
-    let selectedWinCondition = null;
-    let socket = null;
-    let allGames = [];
-
-    function connectWebSocket() {
-        socket = new WebSocket(`wss://yeab-kass.onrender.com/ws/${userId}`);
-        socket.onopen = () => console.log("WebSocket connection established.");
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            switch (data.event) {
-                case "initial_game_list": allGames = data.games; renderGameList(allGames); break;
-                case "new_game": allGames.unshift(data.game); addGameCard(data.game, true); break;
-                case "remove_game": allGames = allGames.filter(g => g.id !== data.gameId); removeGameCard(data.gameId); break;
-            }
-        };
-        // THIS IS THE FIX: Handle errors gracefully
-        socket.onerror = (error) => {
-            console.error("WebSocket Error:", error);
-            gameListContainer.innerHTML = `<div class="error-message">Could not connect to the live server. Please check your connection and refresh.</div>`;
-        };
+function renderGameList(games) {
+    gameListContainer.innerHTML = ''; // Clear previous list
+    if (games.length === 0) {
+        // Display a more engaging empty state, like in the examples
+        gameListContainer.innerHTML = `
+            <div class="empty-state">
+                <h3 class="empty-state-title">No Open Games Found</h3>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">Be the first to create one!</p>
+                <button class="empty-state-btn" id="empty-create-btn">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path></svg>
+                    Create New Game
+                </button>
+            </div>
+        `;
+        // Make the button in the empty state also open the modal
+        document.getElementById('empty-create-btn').addEventListener('click', showStakeModal);
+    } else {
+        games.forEach(addGameCard);
     }
+}
 
-    const createGameCardElement = (game) => {
-        // ... (The code for creating the game card is correct)
-    };
-    
-    // ... (All other rendering and modal functions are correct) ...
+function addGameCard(game) {
+    // Remove the empty state if it exists
+    const emptyState = gameListContainer.querySelector('.empty-state');
+    if (emptyState) emptyState.remove();
 
-    function setupEventListeners() {
-        try {
-            if (newGameBtn) newGameBtn.addEventListener('click', showStakeModal);
-            if (filtersContainer) { /* ... filter logic ... */ }
-            // ... all other button listeners ...
-            if (createGameBtn) {
-                createGameBtn.addEventListener('click', () => {
-                    if (selectedStake && selectedWinCondition) {
-                        tg.sendData(`create_game_stake_${selectedStake}_win_${selectedWinCondition}`);
-                        hideConfirmModal();
-                    }
-                });
-            }
-        } catch (error) {
-            console.error("Error setting up event listeners:", error);
-            // This ensures that even if one listener fails, it won't crash the app.
-        }
-    }
+    const cardElement = document.createElement('div');
+    cardElement.className = 'game-card';
+    cardElement.id = `game-${game.id}`;
 
-    const init = () => {
-        // THIS IS THE FIX: The safety net
-        try {
-            loadingScreen.classList.add('hidden');
-            mainApp.classList.remove('hidden');
-            // These are now guaranteed to run even if the WebSocket fails
-            setupEventListeners();
-            connectWebSocket();
-        } catch (error) {
-            console.error("Fatal error during app initialization:", error);
-            const statusText = document.querySelector('#loading-screen .status-text');
-            if (statusText) statusText.textContent = "Error: App failed to start.";
-            loadingScreen.classList.remove('hidden'); // Make sure the error is visible
-        }
-    };
-    
-    setTimeout(init, 3000); // 3-second delay for a smoother feel
-});
+    // Calculate prize based on the same 10% commission logic
+    const totalPot = game.stake * 2;
+    const prize = totalPot - (totalPot * 0.10);
+
+    // This structure matches the new design from the screenshots
+    cardElement.innerHTML = `
+        <div class="player-info">
+            <div class="avatar"></div> <!-- Placeholder for player avatar -->
+            <div>
+                <div class="name">${game.creatorName || 'Player***'}</div>
+                <div class="stake">Stake: ${game.stake} ETB</div>
+            </div>
+        </div>
+
+        <div class="game-details">
+            <div class="win-text">👑</div>
+            <div class="win-subtext">${game.win_condition} Piece</div>
+        </div>
+
+        <div class="stake-details">
+             <div class="prize-label">Prize</div>
+             <div class="prize">${prize.toFixed(2)} ETB</div>
+        </div>
+
+        <button class="join-btn">Join</button>
+    `;
+
+    // You can add an event listener to the join button here if needed
+    // cardElement.querySelector('.join-btn').addEventListener('click', () => joinGame(game.id));
+
+    gameListContainer.appendChild(cardElement);
+}
+
+// ... the rest of your app.js remains the same ...
