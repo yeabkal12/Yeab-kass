@@ -1,6 +1,8 @@
-/* frontend/styles.css (The Definitive, Reconstructed Version) */
+/* frontend/styles.css (The Final, Complete, and Cleaned-Up Version) */
 
+/* --- Global Setup & Color Palette --- */
 :root {
+    --background-dark: #10101A;
     --primary-dark: #1A1A2E;
     --card-dark: #1D1D34;
     --text-primary: #FFFFFF;
@@ -8,7 +10,6 @@
     --text-muted: #8F8F8F;
     --accent-green: #27AE60;
     --accent-red: #E94560;
-    --accent-gold: #F7B731;
     --gradient-start: #4A47A3;
     --gradient-end: #706FD3;
     --gradient-button: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
@@ -24,8 +25,10 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+/* --- Utility Class --- */
 .hidden { display: none !important; }
 
+/* --- Loading Screen --- */
 #loading-screen { position: fixed; inset: 0; background-color: #000; display: flex; justify-content: center; align-items: center; z-index: 1000; }
 .loading-content { text-align: center; }
 .loading-logo { width: 80px; height: 80px; }
@@ -35,6 +38,7 @@ body {
 @keyframes loading-motion { from { transform: translateX(-100%); } to { transform: translateX(0); } }
 .status-text { margin-top: 15px; font-size: 1em; color: var(--text-muted); }
 
+/* --- Main App UI --- */
 #main-app { padding: 15px; }
 .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .user-info { display: flex; align-items: center; gap: 10px; }
@@ -47,39 +51,29 @@ body {
 .new-button { background-color: var(--accent-green); padding-right: 15px; }
 .refresh-button { background-color: #333; }
 
-.filters { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; scrollbar-width: none; }
-.filters::-webkit-scrollbar { display: none; }
-.filter-button { border: none; border-radius: 20px; padding: 8px 16px; background-color: var(--card-dark); color: var(--text-secondary); font-size: 0.9em; font-weight: 500; cursor: pointer; flex-shrink: 0; }
+/* --- Filters --- */
+.filters { display: flex; gap: 10px; margin-bottom: 20px; }
+.filter-button { border: none; border-radius: 20px; padding: 8px 16px; background-color: var(--card-dark); color: var(--text-secondary); font-size: 0.9em; font-weight: 500; cursor: pointer; }
 .filter-button.active { background: var(--gradient-button); color: var(--text-primary); }
 
+/* --- Game List & Cards --- */
 #game-list-container { text-align: center; }
-.empty-state-container { padding-top: 20px; }
-.empty-state-title { font-size: 1.1em; font-weight: 500; color: var(--text-muted); margin-bottom: 20px; }
+.empty-state-title { font-size: 1.1em; font-weight: 500; color: var(--text-muted); margin: 40px 0 20px 0; }
 .empty-state-btn { border: none; border-radius: 12px; width: 100%; padding: 15px; font-size: 1.1em; font-weight: 600; color: var(--text-primary); background: var(--gradient-button); cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
 .empty-state-btn svg { width: 22px; height: 22px; }
 
-.game-card { background-color: var(--card-dark); border-radius: 12px; padding: 10px 15px; margin-bottom: 10px; animation: fadeIn 0.5s ease-out; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+.game-card { background-color: var(--card-dark); border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; animation: fadeIn 0.5s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.card-player-info { display: flex; align-items: center; gap: 10px; }
-.player-avatar { position: relative; width: 45px; height: 45px; flex-shrink: 0; display: flex; justify-content: center; align-items: center; background-color: var(--primary-dark); border-radius: 50%; }
-.mage-icon { font-size: 1.8em; } /* Style for the new emoji */
-.player-avatar .star { position: absolute; top: -5px; right: -5px; font-size: 1.2em; }
-.player-details { display: flex; flex-direction: column; }
-.player-name { font-weight: 600; font-size: 0.9em; }
-.player-stake { font-size: 0.8em; font-weight: 500; color: var(--accent-gold); }
-.card-game-rules { display: flex; align-items: center; gap: 15px; }
-.win-condition { text-align: center; }
-.crowns { font-size: 1.6em; }
-.win-condition span { font-size: 0.75em; font-weight: 500; color: var(--text-muted); }
-.join-btn { border: none; border-radius: 10px; background: var(--gradient-button); color: var(--text-primary); padding: 10px 25px; font-weight: 600; font-size: 0.9em; cursor: pointer; transition: transform 0.2s ease; }
-.join-btn:hover { transform: scale(1.05); }
-.card-vitals { text-align: right; font-size: 0.85em; font-weight: 500; }
-.vital-item { margin-bottom: 5px; }
-.vital-item:last-child { margin-bottom: 0; }
-.vital-item label { display: none; }
-.vital-item span { color: var(--text-secondary); }
-.vital-item .prize { color: var(--accent-green); font-weight: 600; }
+.game-card .player-info { display: flex; align-items: center; gap: 10px; }
+.game-card .player-info .avatar { width: 40px; height: 40px; background-color: var(--gradient-start); border-radius: 50%; }
+.game-card .game-details { text-align: center; }
+.game-card .game-details .win-text { font-weight: 600; }
+.game-card .game-details .win-subtext { font-size: 0.8em; color: var(--text-muted); }
+.game-card .stake-details { text-align: right; }
+.game-card .stake-details .prize { color: var(--accent-green); font-weight: 600; }
+.game-card .join-btn { border: none; border-radius: 8px; background: var(--gradient-button); color: var(--text-primary); padding: 10px 25px; font-weight: 600; cursor: pointer; margin-top: 8px; }
 
+/* --- Modal Styles --- */
 .modal-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: flex-end; z-index: 500; }
 .modal-content { background-color: var(--primary-dark); width: 100%; padding: 15px; border-radius: 20px 20px 0 0; position: relative; animation: slide-up 0.3s ease-out; }
 @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -96,6 +90,7 @@ body {
 .next { background: var(--gradient-button); color: var(--text-primary); }
 .next:disabled { background: #333; color: var(--text-muted); cursor: not-allowed; }
 
+/* --- Confirmation Modal Specifics --- */
 .summary-container { background-color: var(--card-dark); border-radius: 12px; padding: 15px; margin-bottom: 25px; }
 .summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 500; }
 #summary-stake-amount { color: var(--accent-green); font-weight: 600; }
