@@ -23,13 +23,8 @@ Base = declarative_base()
 
 
 # --- ORM MODEL DEFINITIONS ---
-# This is the section that was causing the error. All models are now correctly defined here.
-
 class User(Base):
-    """
-    Defines the 'users' table in the database.
-    This model stores user-specific information.
-    """
+    """Defines the 'users' table in the database."""
     __tablename__ = "users"
     telegram_id = Column(BigInteger, primary_key=True)
     username = Column(String, nullable=True)
@@ -37,34 +32,27 @@ class User(Base):
 
 
 class Game(Base):
-    """
-    Defines the 'games' table in the database.
-    This is the class that the ImportError was complaining about.
-    It stores information about each Ludo game lobby and session.
-    """
+    """Defines the 'games' table in the database."""
     __tablename__ = "games"
-    id = Column(String, primary_key=True) # A unique ID for each game
+    id = Column(String, primary_key=True)
     creator_id = Column(BigInteger, nullable=False)
     opponent_id = Column(BigInteger, nullable=True)
     stake = Column(DECIMAL(10, 2), nullable=False)
-    win_condition = Column(Integer, nullable=False) # e.g., 1, 2, or 4
-    status = Column(String, default="waiting") # "waiting", "active", "finished"
-    game_state = Column(JSON, nullable=True) # For storing the live board state
+    win_condition = Column(Integer, nullable=False)
+    status = Column(String, default="waiting")
+    game_state = Column(JSON, nullable=True)
     message_id = Column(BigInteger, nullable=True)
     chat_id = Column(BigInteger, nullable=True)
 
 
 class Transaction(Base):
-    """
-    Defines the 'transactions' table in the database.
-    This model logs all financial activities like deposits and withdrawals.
-    """
+    """Defines the 'transactions' table in the database."""
     __tablename__ = "transactions"
-    tx_ref = Column(Text, primary_key=True) # The unique reference from the payment gateway
+    tx_ref = Column(Text, primary_key=True)
     user_id = Column(BigInteger, nullable=False)
     amount = Column(DECIMAL(10, 2), nullable=False)
-    type = Column(String, nullable=False) # 'deposit' or 'withdrawal'
-    status = Column(String, default="pending") # 'pending', 'completed', 'failed'
+    type = Column(String, nullable=False)
+    status = Column(String, default="pending")
 
 
 @asynccontextmanager
