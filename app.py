@@ -1,4 +1,4 @@
-# app.py (The Final, Definitive, and Unified Version)
+# app.py (The Final, Definitive Version with Correct bot_data Initialization)
 
 import logging, os, asyncio, json, uuid, random
 from typing import Dict, List
@@ -35,7 +35,7 @@ class ConnectionManager:
         for connection in self.active_connections: await connection.send_text(message)
 manager = ConnectionManager()
 
-# --- 3. BOT HANDLERS (Now live inside app.py) ---
+# --- 3. BOT HANDLERS ---
 def get_main_keyboard() -> ReplyKeyboardMarkup:
     main_keyboard = [[KeyboardButton("Play Ludo Games 🎮", web_app=WebAppInfo(url=STATIC_SITE_URL))],[KeyboardButton("My Wallet 💰"), KeyboardButton("Deposit 💵")],[KeyboardButton("Withdraw 📤"), KeyboardButton("Support 📞")]]
     return ReplyKeyboardMarkup(main_keyboard, resize_keyboard=True)
@@ -55,7 +55,6 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     logger.info(f"Received Web App data from user {user.id}: {data_str}")
     
-    # Access the manager via the context (the "bridge")
     manager = context.bot_data["connection_manager"]
 
     if data_str.startswith("create_game_"):
@@ -71,15 +70,15 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if game_id:
                 new_game_details = await get_game_details_as_dict(game_id)
                 if new_game_details:
-                    # CRUCIAL FIX: Broadcast the update
                     await manager.broadcast(json.dumps({"event": "new_game", "game": new_game_details}))
             await context.bot.send_message(user.id, "Your game is now live in the lobby!")
         except Exception as e:
             logger.error(f"Failed to create game for user {user.id}: {e}", exc_info=True)
 
-# --- 4. LIFESPAN MANAGER (HANDLES BOT STARTUP) ---
+# --- 4. LIFESPAN MANAGER ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # This function is correct
     logger.info("Application startup...")
     if bot_app and WEBHOOK_URL:
         await bot_app.initialize()
@@ -100,16 +99,24 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, 
 
 if not TELEGRAM_BOT_TOKEN: logger.error("FATAL: TELEGRAM_BOT_TOKEN is not set!")
 else:
-    ptb_application_builder = Application.builder().token(TELEGRAM_BOT_TOKEN)
-    # This is the "bridge" that makes the manager available to handlers
-    ptb_application_builder.bot_data["connection_manager"] = manager
-    ptb_application = ptb_application_builder.build()
+    # =========================================================
+    # =========== THIS IS THE CRITICAL FIX ====================
+    # =========================================================
+    # 1. Create the application instance FIRST.
+    ptb_application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     
-    # Attach handlers directly
+    # 2. Now, set the bot_data on the CREATED application object.
+    ptb_application.bot_data["connection_manager"] = manager
+    
+    # 3. Attach the handlers as before.
     ptb_application.add_handler(CommandHandler("start", start_command))
     ptb_application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data))
+    
+    # 4. Assign the fully configured application to our global variable.
     bot_app = ptb_application
-    logger.info("Telegram bot application created and handlers attached directly.")
+    logger.info("Telegram bot application created and handlers attached successfully.")
+    # =========================================================
+    # =========================================================
 
 # --- 6. API ENDPOINTS ---
 @app.post("/api/telegram/webhook")
