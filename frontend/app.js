@@ -1,4 +1,4 @@
-// app.js - Final Version with All Features
+// app.js - Final Version with Robust Startup Logic
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Initialize Telegram & Basic Setup ---
@@ -6,16 +6,15 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.ready();
     tg.expand();
 
-    const getEl = id => document.getElementById(id);
-
     // --- DOM Element References ---
+    const getEl = id => document.getElementById(id);
     const loadingScreen = getEl('loading-screen');
     const mainApp = getEl('main-app');
     const gameListContainer = getEl('game-list-container');
     const newGameBtn = getEl('new-game-btn');
     const filtersContainer = document.querySelector('.filters');
 
-    // Modal Elements
+    // All other modal and element references
     const stakeModal = getEl('stake-modal');
     const closeStakeModalBtn = getEl('close-stake-modal-btn');
     const stakeOptionsGrid = getEl('stake-options-grid');
@@ -33,32 +32,60 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedStake = null;
     let selectedWinCondition = null;
     let socket = null;
-    let allGames = []; // This will hold the master list of all games
+    let allGames = [];
 
-    // --- WebSocket Logic ---
+    // --- WebSocket Logic with Robust Error Handling ---
     function connectWebSocket() {
-        // IMPORTANT: Replace with your actual Render URL and get the real user ID
-        const userId = tg.initDataUnsafe?.user?.id || '12345'; // Fallback for testing
-        
-        // Make sure you are using wss:// for secure connections in production
-        const socketURL = `wss://your-render-url.onrender.com/ws/${userId}`;
+        console.log("Attempting to connect to WebSocket...");
+
+        // 1. Validate User ID from Telegram
+        const userId = tg.initDataUnsafe?.user?.id;
+        if (!userId) {
+            console.error("CRITICAL: User ID not found. App cannot run outside of Telegram.");
+            alert("Error: Could not verify your user data. Please launch this app through your Telegram bot.");
+            // Stop here; the loading screen will remain, indicating a fatal error.
+            return;
+        }
+        console.log("User ID found:", userId);
+
+        // 2. !!! IMPORTANT: Replace with your actual Render URL !!!
+        const socketURL = `wss://yeab-game-zone.onrender.com/ws/${userId}`;
+        console.log("Connecting to WebSocket at:", socketURL);
         
         socket = new WebSocket(socketURL);
 
-        socket.onopen = () => console.log("WebSocket connection established.");
-        socket.onclose = () => console.log("WebSocket connection closed.");
+        // 3. THIS IS THE KEY FIX: The app only "opens" on a successful connection.
+        socket.onopen = () => {
+            console.log("SUCCESS: WebSocket connection established.");
+            // Now that we are connected, hide the loading screen and show the app.
+            loadingScreen.style.opacity = '0';
+            mainApp.classList.remove('hidden');
+            // Remove the loading screen from the DOM after the fade-out transition.
+            setTimeout(() => loadingScreen.remove(), 500);
+        };
+
+        socket.onclose = () => {
+            console.warn("WebSocket connection closed.");
+            // Optionally, you can show a "Connection lost" message to the user here.
+        };
+        
+        socket.onerror = (error) => {
+            console.error("CRITICAL: WebSocket connection failed.", error);
+            alert("Connection Error: Unable to connect to the game server. Please check your internet connection and try again later.");
+            // The app remains on the loading screen, as it's not functional.
+        };
+
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
             switch (data.event) {
                 case "initial_game_list":
                     allGames = data.games;
-                    renderGameList(allGames);
+                    applyCurrentFilter();
                     break;
                 case "new_game":
                     if (!allGames.some(g => g.id === data.game.id)) {
                         allGames.unshift(data.game);
                     }
-                    // Apply current filter after adding a new game
                     applyCurrentFilter();
                     break;
                 case "remove_game":
@@ -141,18 +168,53 @@ document.addEventListener('DOMContentLoaded', () => {
         renderGameList(filteredGames);
     }
     
-    filtersContainer.addEventListener('click', (event) => {
-        const button = event.target.closest('.filter-button');
-        if (!button) return;
+    // --- Event Listeners ---
+    function setupEventListeners() {
+        filtersContainer.addEventListener('click', (event) => {
+            const button = event.target.closest('.filter-button');
+            if (!button) return;
+            filtersContainer.querySelector('.active')?.classList.remove('active');
+            button.classList.add('active');
+            applyCurrentFilter();
+        });
 
-        // Update active button style
-        filtersContainer.querySelector('.active')?.classList.remove('active');
-        button.classList.add('active');
+        // Modal & Game Creation Event Listeners
+        newGameBtn.addEventListener('click', () => showModal(stakeModal));
+        closeStakeModalBtn.addEventListener('click', () => hideModal(stakeModal));
+        cancelStakeBtn.addEventListener('click', () => hideModal(stakeModal));
+        nextStakeBtn.addEventListener('click', () => {
+            hideModal(stakeModal);
+            updateSummary();
+            showModal(confirmModal);
+        });
+        closeConfirmModalBtn.addEventListener('click', () => hideModal(confirmModal));
+        cancelConfirmBtn.addEventListener('click', () => hideModal(confirmModal));
+        stakeOptionsGrid.addEventListener('click', e => {
+            const button = e.target.closest('.option-btn');
+            if (!button) return;
+            stakeOptionsGrid.querySelector('.selected')?.classList.remove('selected');
+            button.classList.add('selected');
+            selectedStake = parseInt(button.dataset.stake);
+            nextStakeBtn.disabled = false;
+        });
+        winConditionOptions.addEventListener('click', e => {
+            const button = e.target.closest('.win-option-btn');
+            if (!button) return;
+            winConditionOptions.querySelector('.selected')?.classList.remove('selected');
+            button.classList.add('selected');
+            selectedWinCondition = parseInt(button.dataset.win);
+            createGameBtn.disabled = false;
+        });
+        createGameBtn.addEventListener('click', () => {
+            if (!socket || !selectedStake || !selectedWinCondition) return;
+            socket.send(JSON.stringify({
+                event: "create_game",
+                payload: { stake: selectedStake, winCondition: selectedWinCondition }
+            }));
+            hideModal(confirmModal);
+        });
+    }
 
-        applyCurrentFilter();
-    });
-
-    // --- Modal Management ---
     const showModal = (modal) => {
         modal.classList.remove('hidden');
         setTimeout(() => {
@@ -166,50 +228,6 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.remove('active');
         setTimeout(() => modal.classList.add('hidden'), 300);
     };
-
-    // --- Event Listeners for Modals & Game Creation ---
-    newGameBtn.addEventListener('click', () => showModal(stakeModal));
-    closeStakeModalBtn.addEventListener('click', () => hideModal(stakeModal));
-    cancelStakeBtn.addEventListener('click', () => hideModal(stakeModal));
-
-    nextStakeBtn.addEventListener('click', () => {
-        hideModal(stakeModal);
-        updateSummary();
-        showModal(confirmModal);
-    });
-
-    closeConfirmModalBtn.addEventListener('click', () => hideModal(confirmModal));
-    cancelConfirmBtn.addEventListener('click', () => hideModal(confirmModal));
-
-    stakeOptionsGrid.addEventListener('click', e => {
-        const button = e.target.closest('.option-btn');
-        if (button) {
-            stakeOptionsGrid.querySelector('.selected')?.classList.remove('selected');
-            button.classList.add('selected');
-            selectedStake = parseInt(button.dataset.stake);
-            nextStakeBtn.disabled = false;
-        }
-    });
-
-    winConditionOptions.addEventListener('click', e => {
-        const button = e.target.closest('.win-option-btn');
-        if (button) {
-            winConditionOptions.querySelector('.selected')?.classList.remove('selected');
-            button.classList.add('selected');
-            selectedWinCondition = parseInt(button.dataset.win);
-            createGameBtn.disabled = false;
-        }
-    });
-
-    createGameBtn.addEventListener('click', () => {
-        if (!socket || !selectedStake || !selectedWinCondition) return;
-        const gameData = {
-            event: "create_game",
-            payload: { stake: selectedStake, winCondition: selectedWinCondition }
-        };
-        socket.send(JSON.stringify(gameData));
-        hideModal(confirmModal);
-    });
     
     function updateSummary() {
         if (!selectedStake) return;
@@ -220,13 +238,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initial Application Load ---
     function init() {
-        setTimeout(() => {
-            loadingScreen.style.opacity = '0';
-            mainApp.classList.remove('hidden');
-            setTimeout(() => loadingScreen.remove(), 500);
-            connectWebSocket();
-        }, 2000);
+        console.log("Initializing application...");
+        setupEventListeners();
+        connectWebSocket(); // This function now controls when the app is shown
     }
 
+    // Start the app initialization process
     init();
-});```
+});
