@@ -1,4 +1,4 @@
-# app.py (The Final, Definitive Version with the Connection Bridge Injected)
+# app.py (The Final, Definitive Version with All Fixes Merged)
 
 import logging
 import os
@@ -33,7 +33,7 @@ bot_app: Application | None = None
 class ConnectionManager:
     """Manages active WebSocket connections."""
     def __init__(self):
-        self.active_connections: List[WebSocket] = [] # Simplified for this fix
+        self.active_connections: List[WebSocket] = []
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
@@ -55,6 +55,8 @@ async def lifespan(app: FastAPI):
         await bot_app.initialize()
         webhook_full_url = f"{WEBHOOK_URL}/api/telegram/webhook"
         try:
+            # Add a random delay to prevent race conditions with gunicorn workers
+            await asyncio.sleep(random.uniform(0.5, 2.0))
             await bot_app.bot.set_webhook(url=webhook_full_url, allowed_updates=Update.ALL_TYPES)
             logger.info(f"Successfully set webhook to: {webhook_full_url}")
         except RetryAfter:
@@ -66,45 +68,7 @@ async def lifespan(app: FastAPI):
     if bot_app:
         await bot_app.shutdown()
 
-# --- 4. MAIN FASTAPI APP INITIALIZATION ---
-app = FastAPI(title="Yeab Game Zone API", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
-
-if not TELEGRAM_BOT_TOKEN:
-    logger.error("FATAL: TELEGRAM_BOT_TOKEN is not set! Bot will be disabled.")
-else:
-    # =========================================================
-    # =========== START: INJECTED CHANGE #1 (The Bridge) ======
-    # =========================================================
-    ptb_application_builder = Application.builder().token(TELEGRAM_BOT_TOKEN)
-    
-    # We add our connection manager to the bot's shared data.
-    # Now, any handler inside bot/handlers.py can access it.
-    ptb_application_builder.bot_data["connection_manager"] = manager
-    
-    ptb_application = ptb_application_builder.build()
-    bot_app = setup_handlers(ptb_application)
-    logger.info("Telegram bot application created and handlers have been attached.")
-    # =========================================================
-    # ============= END: INJECTED CHANGE #1 ===================
-    # =========================================================
-
-
-# --- 5. API ENDPOINTS (BOT & HTTP) ---
-
-@app.post("/api/telegram/webhook")
-async def telegram_webhook(request: Request):
-    """Main webhook to receive updates from Telegram."""
-    if not bot_app: return Response(status_code=503)
-    try:
-        data = await request.json()
-        update = Update.de_json(data, bot_app.bot)
-        await bot_app.process_update(update)
-        return Response(status_code=200)
-    except Exception as e:
-        logger.error(f"Error processing Telegram update: {e}", exc_info=True)
-        return Response(status_code=500)
-
+# --- Helper function to fetch game details (needed for the bridge) ---
 async def get_game_details_as_dict(game_id: int) -> Dict:
     """Helper to fetch full game details for broadcasting."""
     async with get_db_session() as session:
@@ -122,9 +86,48 @@ async def get_game_details_as_dict(game_id: int) -> Dict:
             "winCondition": row.win_condition
         }
 
+# --- 4. MAIN FASTAPI APP INITIALIZATION ---
+app = FastAPI(title="Yeab Game Zone API", lifespan=lifespan)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+if not TELEGRAM_BOT_TOKEN:
+    logger.error("FATAL: TELEGRAM_BOT_TOKEN is not set! Bot will be disabled.")
+else:
+    # =========================================================
+    # =========== THIS IS THE CRITICAL FIX (THE BRIDGE) =======
+    # =========================================================
+    ptb_application_builder = Application.builder().token(TELEGRAM_BOT_TOKEN)
+    
+    # We provide BOTH the manager and the helper function to the bot's shared data.
+    # This prevents the circular import error.
+    ptb_application_builder.bot_data["connection_manager"] = manager
+    ptb_application_builder.bot_data["get_game_details"] = get_game_details_as_dict
+    
+    ptb_application = ptb_application_builder.build()
+    bot_app = setup_handlers(ptb_application)
+    logger.info("Telegram bot application created and handlers have been attached.")
+
+
+# --- 5. API ENDPOINTS ---
+
+@app.post("/api/telegram/webhook")
+async def telegram_webhook(request: Request):
+    """Main webhook to receive updates from Telegram."""
+    if not bot_app: return Response(status_code=503)
+    try:
+        data = await request.json()
+        update = Update.de_json(data, bot_app.bot)
+        await bot_app.process_update(update)
+        return Response(status_code=200)
+    except Exception as e:
+        logger.error(f"Error processing Telegram update: {e}", exc_info=True)
+        return Response(status_code=500)
+
+
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: int):
     """Handles real-time connections for live lobby updates."""
+    # Simplified connect call that doesn't need user_id for this manager version
     await manager.connect(websocket)
     try:
         # Send initial game list from the database
@@ -137,11 +140,8 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
             ]
         await websocket.send_text(json.dumps({"event": "initial_game_list", "games": initial_games}))
 
+        # This loop now only listens for the 'join_game' action from the frontend
         while True:
-            # =========================================================
-            # ======= START: INJECTED CHANGE #2 (Join Logic) ==========
-            # =========================================================
-            # The websocket now listens for the 'join_game' action from the frontend
             data = await websocket.receive_json()
             action = data.get("action")
             
@@ -158,9 +158,6 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
                 # Announce to everyone that the game is now gone
                 await manager.broadcast(json.dumps({"event": "remove_game", "gameId": game_id_to_join}))
                 logger.info(f"Broadcasted removal of game {game_id_to_join}")
-            # =========================================================
-            # ========= END: INJECTED CHANGE #2 =======================
-            # =========================================================
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
