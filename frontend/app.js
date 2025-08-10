@@ -1,4 +1,4 @@
-// app.js - Final Version
+// app.js - Final Version with All Features
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Initialize Telegram & Basic Setup ---
@@ -15,14 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const newGameBtn = getEl('new-game-btn');
     const filtersContainer = document.querySelector('.filters');
 
-    // Stake Modal Elements
+    // Modal Elements
     const stakeModal = getEl('stake-modal');
     const closeStakeModalBtn = getEl('close-stake-modal-btn');
     const stakeOptionsGrid = getEl('stake-options-grid');
     const cancelStakeBtn = getEl('cancel-stake-btn');
     const nextStakeBtn = getEl('next-stake-btn');
-
-    // Confirm Modal Elements
     const confirmModal = getEl('confirm-modal');
     const closeConfirmModalBtn = getEl('close-confirm-modal-btn');
     const winConditionOptions = getEl('win-condition-options');
@@ -35,21 +33,38 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedStake = null;
     let selectedWinCondition = null;
     let socket = null;
-    let allGames = [];
+    let allGames = []; // This will hold the master list of all games
 
     // --- WebSocket Logic ---
     function connectWebSocket() {
-        socket = new WebSocket("wss://yeab-kass.onrender.com/ws"); // Replace with your WebSocket URL
+        // IMPORTANT: Replace with your actual Render URL and get the real user ID
+        const userId = tg.initDataUnsafe?.user?.id || '12345'; // Fallback for testing
+        
+        // Make sure you are using wss:// for secure connections in production
+        const socketURL = `wss://your-render-url.onrender.com/ws/${userId}`;
+        
+        socket = new WebSocket(socketURL);
+
         socket.onopen = () => console.log("WebSocket connection established.");
         socket.onclose = () => console.log("WebSocket connection closed.");
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            if (data.event === "initial_game_list") {
-                allGames = data.games;
-                renderGameList(allGames);
-            } else if (data.event === "new_game") {
-                allGames.unshift(data.game); // Add new games to the top
-                renderGameList(allGames);
+            switch (data.event) {
+                case "initial_game_list":
+                    allGames = data.games;
+                    renderGameList(allGames);
+                    break;
+                case "new_game":
+                    if (!allGames.some(g => g.id === data.game.id)) {
+                        allGames.unshift(data.game);
+                    }
+                    // Apply current filter after adding a new game
+                    applyCurrentFilter();
+                    break;
+                case "remove_game":
+                    allGames = allGames.filter(g => g.id !== data.gameId);
+                    removeGameCard(data.gameId);
+                    break;
             }
         };
     }
@@ -64,37 +79,83 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    const getWinConditionText = (condition) => {
+        const amharicMap = { 1: "1 ጠጠር ባነገሰ", 2: "2 ጠጠር ባነገሰ", 4: "4 ጠጠር ባነገሰ" };
+        return amharicMap[condition] || `${condition} Piece`;
+    };
+
     function addGameCard(game) {
         const cardElement = document.createElement('div');
         cardElement.className = 'game-card';
         cardElement.id = `game-${game.id}`;
-        const prize = (game.stake * 2) * 0.9; // 10% commission
+        const prize = game.prize.toFixed(2);
+        const stake = game.stake.toFixed(2);
+        const winText = getWinConditionText(game.win_condition);
 
         cardElement.innerHTML = `
-            <div class="game-card-player">
-                <div class="avatar"></div>
+            <div class="gc-player-info">
+                <div class="gc-avatar">🧙</div>
+                <div class="gc-name-stake">
+                    <span class="gc-name">${game.creatorName || 'Anonymous'}</span>
+                    <span class="gc-stake">${stake} ETB</span>
+                </div>
             </div>
-            <div>
-                <div class="username">${game.creatorName || '@Pla***9'}</div>
-                <div class="stake">${game.stake} ETB</div>
+            <div class="gc-win-condition">
+                <span class="gc-icon">💸</span>
+                <span class="gc-text">${winText}</span>
             </div>
-            <div class="game-card-details">
-                <div class="icon">👑</div>
-                <div class="text">${game.win_condition} Piece</div>
-            </div>
-            <div class="game-card-actions">
-                <div class="prize-label">Prize</div>
-                <div class="prize">${prize.toFixed(2)} ETB</div>
-                <button class="join-btn">Join</button>
+            <div class="gc-actions">
+                <span class="gc-prize-label">Prize</span>
+                <span class="gc-prize">${prize} ETB</span>
+                <button class="gc-join-btn" data-game-id="${game.id}">Join</button>
             </div>
         `;
         gameListContainer.appendChild(cardElement);
     }
 
+    function removeGameCard(gameId) {
+        const cardToRemove = document.getElementById(`game-${gameId}`);
+        if (cardToRemove) {
+            cardToRemove.remove();
+        }
+        if (gameListContainer.children.length === 0) {
+            gameListContainer.innerHTML = `<h3 class="empty-state-title">No Open Games</h3>`;
+        }
+    }
+
+    // --- Filter Logic ---
+    function applyCurrentFilter() {
+        const activeFilterBtn = filtersContainer.querySelector('.filter-button.active');
+        const filter = activeFilterBtn.dataset.filter;
+        let filteredGames = [];
+
+        if (filter === 'all') {
+            filteredGames = allGames;
+        } else if (filter.includes('-')) {
+            const [min, max] = filter.split('-').map(Number);
+            filteredGames = allGames.filter(g => g.stake >= min && g.stake <= max);
+        } else {
+            const min = Number(filter);
+            filteredGames = allGames.filter(g => g.stake >= min);
+        }
+        renderGameList(filteredGames);
+    }
+    
+    filtersContainer.addEventListener('click', (event) => {
+        const button = event.target.closest('.filter-button');
+        if (!button) return;
+
+        // Update active button style
+        filtersContainer.querySelector('.active')?.classList.remove('active');
+        button.classList.add('active');
+
+        applyCurrentFilter();
+    });
+
     // --- Modal Management ---
     const showModal = (modal) => {
         modal.classList.remove('hidden');
-        setTimeout(() => { // Allow display change before adding class
+        setTimeout(() => {
             mainApp.style.filter = 'blur(5px)';
             modal.classList.add('active');
         }, 10);
@@ -103,10 +164,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const hideModal = (modal) => {
         mainApp.style.filter = 'none';
         modal.classList.remove('active');
-        setTimeout(() => modal.classList.add('hidden'), 300); // Wait for transition
+        setTimeout(() => modal.classList.add('hidden'), 300);
     };
 
-    // --- Event Listeners ---
+    // --- Event Listeners for Modals & Game Creation ---
     newGameBtn.addEventListener('click', () => showModal(stakeModal));
     closeStakeModalBtn.addEventListener('click', () => hideModal(stakeModal));
     cancelStakeBtn.addEventListener('click', () => hideModal(stakeModal));
@@ -150,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
         hideModal(confirmModal);
     });
     
-    // --- Summary Logic ---
     function updateSummary() {
         if (!selectedStake) return;
         const prize = (selectedStake * 2) * 0.9;
@@ -165,8 +225,8 @@ document.addEventListener('DOMContentLoaded', () => {
             mainApp.classList.remove('hidden');
             setTimeout(() => loadingScreen.remove(), 500);
             connectWebSocket();
-        }, 2000); // Simulate loading time
+        }, 2000);
     }
 
     init();
-});
+});```
