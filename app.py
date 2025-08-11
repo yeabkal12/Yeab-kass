@@ -1,4 +1,4 @@
-# app.py - The final, robust version with resilient startup
+# app.py - The Final, Production-Ready Version
 
 import asyncio
 import json
@@ -12,14 +12,11 @@ from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.future import select
 from telegram import Update
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ConversationHandler
-from telegram.error import RetryAfter # IMPORT THE SPECIFIC ERROR
+from telegram.ext import Application
+from telegram.error import RetryAfter
 
-# --- Import Your Project Modules ---
-from bot.handlers import (
-    start_command, main_menu_handler, deposit_amount_handler, cancel_conversation_handler,
-    DEPOSIT_AMOUNT
-)
+# Import your project modules
+from bot.handlers import setup_handlers # THE KEY CHANGE IS HERE
 from database_models.manager import Base, engine, AsyncSessionLocal, Game
 
 # --- Environment Variable Validation ---
@@ -46,87 +43,68 @@ async def initialize_database():
 async def lifespan(app: FastAPI):
     logger.info("Application starting up...")
     await initialize_database()
+    
+    # Setup Telegram Bot
     bot_app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
-
-    # Register handlers
-    deposit_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(main_menu_handler, pattern='^deposit$')],
-        states={DEPOSIT_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, deposit_amount_handler)]},
-        fallbacks=[CallbackQueryHandler(cancel_conversation_handler, pattern='^cancel_conv$')]
-    )
-    bot_app.add_handler(CommandHandler("start", start_command))
-    bot_app.add_handler(deposit_conv)
-    bot_app.add_handler(CallbackQueryHandler(main_menu_handler))
-
-    # ==============================================================================
-    # --- THIS IS THE KEY FIX: Resilient Webhook Setup ---
-    # ==============================================================================
+    
+    # THE KEY CHANGE IS HERE: All handlers are now set up in a separate function
+    setup_handlers(bot_app)
+    
+    # Resilient Webhook Setup
     try:
         full_webhook_url = f"{WEBHOOK_URL}/api/telegram/webhook"
-        
-        # 1. First, CHECK the current webhook
         current_webhook_info = await bot_app.bot.get_webhook_info()
-        
-        # 2. Only SET the webhook if it's not already correct
         if current_webhook_info.url != full_webhook_url:
             await bot_app.bot.delete_webhook(drop_pending_updates=True)
             await bot_app.bot.set_webhook(url=full_webhook_url)
             logger.info(f"Webhook successfully set to {full_webhook_url}")
         else:
             logger.info("Webhook is already set correctly. Skipping.")
-
-    # 3. CATCH the flood control error and prevent the crash
     except RetryAfter as e:
-        logger.warning(f"Flood control exceeded while setting webhook. Will retry on next startup. Details: {e}")
+        logger.warning(f"Flood control exceeded while setting webhook. Details: {e}")
     except Exception as e:
-        logger.error(f"An unexpected error occurred during webhook setup: {e}")
-        # Depending on the severity, you might want to raise this to stop the app
-        # For now, we'll log it and continue.
+        logger.error(f"An unexpected error occurred during webhook setup: {e}", exc_info=True)
 
     app.state.bot_app = bot_app
     
-    yield # Application runs here
+    yield # Application runs
     
     logger.info("Application shutting down...")
-    # It's good practice to try cleaning up, but don't crash if it fails
     try:
         await app.state.bot_app.bot.delete_webhook()
     except Exception as e:
         logger.error(f"Error deleting webhook on shutdown: {e}")
 
-# (The rest of your app.py remains exactly the same)
-# ...
 # --- Main Application Instance ---
 app = FastAPI(title="Yeab Game Zone", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
+# --- Connection Manager (No changes needed) ---
 class ConnectionManager:
-    def __init__(self):
-        self.active_connections: dict[int, WebSocket] = {}
-    async def connect(self, websocket: WebSocket, user_id: int):
-        await websocket.accept()
-        self.active_connections[user_id] = websocket
+    def __init__(self): self.active_connections: dict[int, WebSocket] = {}
+    async def connect(self, ws: WebSocket, user_id: int): await ws.accept(); self.active_connections[user_id] = ws
     def disconnect(self, user_id: int):
-        if user_id in self.active_connections:
-            del self.active_connections[user_id]
-    async def broadcast(self, message: dict):
-        message_str = json.dumps(message)
-        tasks = [conn.send_text(message_str) for conn in self.active_connections.values()]
-        await asyncio.gather(*tasks, return_exceptions=True)
-    async def send_personal_message(self, message: dict, user_id: int):
-        if user_id in self.active_connections:
-            await self.active_connections[user_id].send_text(json.dumps(message))
-
+        if user_id in self.active_connections: del self.active_connections[user_id]
+    async def broadcast(self, msg: dict): await asyncio.gather(*[c.send_text(json.dumps(msg)) for c in self.active_connections.values()], return_exceptions=True)
+    async def send_personal_message(self, msg: dict, user_id: int):
+        if user_id in self.active_connections: await self.active_connections[user_id].send_text(json.dumps(msg))
 manager = ConnectionManager()
 
+# --- Webhook Endpoint ---
 @app.post("/api/telegram/webhook")
 async def telegram_webhook(request: Request):
+    """
+    Handles updates from Telegram by putting them into the bot's processing queue.
+    """
     bot_app = request.app.state.bot_app
     update_data = await request.json()
-    update = Update.de_json(update_data, bot_app.bot)
-    await bot_app.process_update(update)
+    
+    # THE KEY CHANGE IS HERE: Use the queue for better performance and reliability
+    await bot_app.update_queue.put(Update.de_json(update_data, bot_app.bot))
+    
     return {"status": "ok"}
 
+# --- WebSocket Endpoint (No changes needed) ---
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: int):
     await manager.connect(websocket, user_id)
@@ -161,6 +139,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
     finally:
         manager.disconnect(user_id)
 
+# --- Root Endpoint (No changes needed) ---
 @app.get("/")
 def read_root():
     return {"status": "Yeab Game Zone API is running"}
