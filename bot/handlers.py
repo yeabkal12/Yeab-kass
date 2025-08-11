@@ -1,4 +1,4 @@
-# bot/handlers.py - The Final, Production-Ready Version
+# bot/handlers.py - The Final, Production-Ready Version with Race Condition Fix
 
 import os
 import uuid
@@ -14,12 +14,12 @@ from sqlalchemy.exc import IntegrityError
 from database_models.manager import AsyncSessionLocal, User, Transaction
 
 # --- Environment Variable Validation ---
-WEB_APP_URL = os.getenv("WEB_APP_URL")
+# We ONLY check for variables that are needed immediately at import time.
+# WEB_APP_URL will be checked later, inside the functions that use it.
 CHAPA_API_KEY = os.getenv("CHAPA_API_KEY")
-CHAPA_API_URL = "https://api.chapa.co/v1/transaction/initialize"
-
-if not WEB_APP_URL: raise ValueError("FATAL: WEB_APP_URL is not set.")
 if not CHAPA_API_KEY: raise ValueError("FATAL: CHAPA_API_KEY is not set.")
+
+CHAPA_API_URL = "https://api.chapa.co/v1/transaction/initialize"
 
 # --- Conversation States & Logging ---
 DEPOSIT_AMOUNT = range(1)
@@ -27,42 +27,46 @@ logger = logging.getLogger(__name__)
 
 # --- Helper Functions ---
 async def get_or_create_user(user_id: int, username: str) -> User:
-    """Gets a user from the DB or creates one, handling race conditions."""
+    # This robust version handles race conditions correctly
     async with AsyncSessionLocal() as session:
-        # First attempt to get the user
         stmt = select(User).where(User.telegram_id == user_id)
         result = await session.execute(stmt)
         user = result.scalar_one_or_none()
-
-        if user:
-            return user
-        
-        # If user doesn't exist, try to create them
+        if user: return user
         try:
-            logger.info(f"Creating new user for ID: {user_id}, Username: {username}")
+            logger.info(f"Creating new user for ID: {user_id}")
             new_user = User(telegram_id=user_id, username=username, balance=0.00)
             session.add(new_user)
             await session.commit()
             return new_user
         except IntegrityError:
-            # THIS IS THE FIX for the race condition
-            logger.warning(f"Race condition detected for user {user_id}. Rolling back and re-fetching.")
             await session.rollback()
-            # The user must exist now, so we can fetch them
             result = await session.execute(stmt)
-            user = result.scalar_one()
-            return user
+            return result.scalar_one()
 
 def build_main_menu() -> InlineKeyboardMarkup:
-    """Builds the main menu keyboard."""
+    """Builds the main menu keyboard, checking for WEB_APP_URL just-in-time."""
+    
+    # --- THIS IS THE CRITICAL FIX ---
+    # We get the WEB_APP_URL here, inside the function, not at the top of the file.
+    WEB_APP_URL = os.getenv("WEB_APP_URL")
+    
+    # Base buttons that are always available
     buttons = [
-        [InlineKeyboardButton("🚀 Open Game Zone", web_app=WebAppInfo(url=WEB_APP_URL))],
         [
             InlineKeyboardButton("💰 My Wallet", callback_data="wallet"),
             InlineKeyboardButton("📥 Deposit", callback_data="deposit"),
         ],
         [InlineKeyboardButton("📤 Withdraw", callback_data="withdraw")],
     ]
+    
+    # Only add the "Open Game Zone" button if the URL is actually available
+    if WEB_APP_URL:
+        buttons.insert(0, [InlineKeyboardButton("🚀 Open Game Zone", web_app=WebAppInfo(url=WEB_APP_URL))])
+    else:
+        # If the URL is missing, we log a critical error but DO NOT crash.
+        logger.critical("FATAL: WEB_APP_URL is not set! The 'Open Game Zone' button will be hidden.")
+
     return InlineKeyboardMarkup(buttons)
 
 # --- Command & Callback Handlers ---
@@ -102,17 +106,17 @@ async def deposit_amount_handler(update: Update, context: ContextTypes.DEFAULT_T
     user = update.effective_user
     try:
         amount = float(update.message.text)
-        if amount <= 10: raise ValueError("Amount must be greater than 10 ETB.")
+        if amount <= 10: raise ValueError("Amount must be > 10")
     except (ValueError, TypeError):
-        await update.message.reply_text("Invalid amount. Please enter a number greater than 10. Or type /cancel.")
+        await update.message.reply_text("Invalid amount. Please enter a number greater than 10.")
         return DEPOSIT_AMOUNT
 
     tx_ref = f"YGZ-DEP-{user.id}-{uuid.uuid4()}"
-    deposit_fee = amount * 0.02
-    amount_after_fee = amount - deposit_fee
+    
+    # Get the WEB_APP_URL again, just in time
+    WEB_APP_URL = os.getenv("WEB_APP_URL")
 
-    # --- THIS IS THE FIX for the "Ghost Transaction" ---
-    # 1. First, save the transaction record to our database as 'pending'.
+    # Save the pending transaction first
     try:
         async with AsyncSessionLocal() as session:
             new_tx = Transaction(tx_ref=tx_ref, user_id=user.id, amount=amount, type='deposit', status='pending')
@@ -120,15 +124,15 @@ async def deposit_amount_handler(update: Update, context: ContextTypes.DEFAULT_T
             await session.commit()
     except Exception as e:
         logger.error(f"Failed to save pending transaction to DB: {e}")
-        await update.message.reply_text("A database error occurred. Please try again later.")
+        await update.message.reply_text("A database error occurred. Please try again.")
         return ConversationHandler.END
 
-    # 2. Only after saving, attempt to contact the payment gateway.
-    headers = {"Authorization": f"Bearer {CHAPA_API_KEY}", "Content-Type": "application/json"}
+    # Then, contact Chapa
+    headers = {"Authorization": f"Bearer {CHAPA_API_KEY}"}
     payload = {
         "amount": str(amount), "currency": "ETB", "email": f"{user.id}@telegram.user",
         "first_name": user.first_name, "last_name": user.last_name or "Ludo", "tx_ref": tx_ref,
-        "callback_url": f"{WEB_APP_URL}/api/payment/webhook", # You'll need to build this endpoint
+        "callback_url": f"{WEB_APP_URL}/api/payment/webhook",
         "return_url": f"https://t.me/{context.bot.username}",
         "customization[title]": "Yeab Game Zone Deposit", "customization[description]": f"Deposit of {amount} ETB"
     }
@@ -140,40 +144,36 @@ async def deposit_amount_handler(update: Update, context: ContextTypes.DEFAULT_T
             data = response.json()
         
         checkout_url = data["data"]["checkout_url"]
-        text = (
-            f"✅ Deposit initiated!\n\n**Amount:** `{amount:.2f} ETB`\n**Fee (2%):** `{deposit_fee:.2f} ETB`\n"
-            f"**You will receive:** `{amount_after_fee:.2f} ETB`\n\nClick the button below to complete your payment."
-        )
+        deposit_fee = amount * 0.02
+        amount_after_fee = amount - deposit_fee
+        text = (f"✅ Deposit initiated!\n\n**Amount:** `{amount:.2f} ETB`\n**You will receive:** `{amount_after_fee:.2f} ETB`\n\nClick below to complete your payment.")
         keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Pay with Chapa", url=checkout_url)]])
         await update.message.reply_text(text, reply_markup=keyboard, parse_mode='Markdown')
 
     except httpx.HTTPStatusError as e:
         logger.error(f"Chapa API Error: {e.response.text}")
-        await update.message.reply_text("Sorry, we couldn't connect to the payment gateway. Please try again later.")
-        # Optional: Update transaction status to 'failed' in DB
+        await update.message.reply_text("Sorry, we couldn't connect to the payment gateway.")
     except Exception as e:
         logger.error(f"An error occurred during Chapa request: {e}")
-        await update.message.reply_text("An unexpected error occurred. Please contact support.")
+        await update.message.reply_text("An unexpected error occurred.")
 
     return ConversationHandler.END
 
 async def cancel_conversation_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    if query:
-        await query.answer()
-        await query.edit_message_text("Action canceled. What would you like to do next?", reply_markup=build_main_menu())
+    if update.callback_query:
+        await update.callback_query.answer()
+        await update.callback_query.edit_message_text("Action canceled.", reply_markup=build_main_menu())
     else:
         await update.message.reply_text("Action canceled.", reply_markup=build_main_menu())
     return ConversationHandler.END
 
 def setup_handlers(application: Application):
     """Registers all the bot handlers with the Application instance."""
-    deposit_conv_handler = ConversationHandler(
+    conv_handler = ConversationHandler(
         entry_points=[CallbackQueryHandler(main_menu_handler, pattern='^deposit$')],
-        states={ DEPOSIT_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, deposit_amount_handler)] },
-        fallbacks=[ CommandHandler('cancel', cancel_conversation_handler), CallbackQueryHandler(cancel_conversation_handler, pattern='^cancel_conv$') ],
-        per_message=False
+        states={DEPOSIT_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, deposit_amount_handler)]},
+        fallbacks=[CommandHandler('cancel', cancel_conversation_handler), CallbackQueryHandler(cancel_conversation_handler, pattern='^cancel_conv$')]
     )
     application.add_handler(CommandHandler("start", start_command))
-    application.add_handler(deposit_conv_handler)
+    application.add_handler(conv_handler)
     application.add_handler(CallbackQueryHandler(main_menu_handler))
